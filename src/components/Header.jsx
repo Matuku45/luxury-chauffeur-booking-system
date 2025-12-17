@@ -41,8 +41,8 @@ const Header = () => {
           <Link to="/vehicles" onClick={() => setMenuOpen(false)} className="block hover:text-yellow-400 transition">Vehicles</Link>
           <Link to="/booking" onClick={() => setMenuOpen(false)} className="block hover:text-yellow-400 transition">Booking</Link>
           <Link to="/contact" onClick={() => setMenuOpen(false)} className="block hover:text-yellow-400 transition">Contact</Link>
-      <Link to="/login" onClick={() => setMenuOpen(false)} className="block hover:text-yellow-400 transition">Login</Link>
-      <Link to="/signup" onClick={() => setMenuOpen(false)} className="block hover:text-yellow-400 transition">Sign Up</Link>
+      <Link to="/login" onClick={() => setMenuOpen(false)} className="block hover:text-yellow-400 transition">login</Link>
+      <Link to="/signup" onClick={() => setMenuOpen(false)} className="block hover:text-yellow-400 transition">sign Up</Link>
 
         </div>
       )}

@@ -9,17 +9,15 @@ import Weddings from "./pages/Weddings";
 import Vehicles from "./pages/Vehicles";
 import Booking from "./pages/Booking";
 import Contact from "./pages/Contact";
-import login from "./pages/login";
-import signup from "./pages/signup";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
 function App() {
   return (
     <Router>
       <div className="flex flex-col min-h-screen">
-        {/* Header */}
         <Header />
 
-        {/* Main Content */}
         <main className="flex-grow pt-24">
           <Routes>
             <Route path="/" element={<Home />} />
@@ -28,12 +26,11 @@ function App() {
             <Route path="/vehicles" element={<Vehicles />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/login" element={login()} />
-            <Route path="/signup" element={signup()} /> 
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
           </Routes>
         </main>
 
-        {/* Footer */}
         <Footer />
       </div>
     </Router>
