@@ -1,42 +1,89 @@
 import React from "react";
+import {
+  FaEnvelope,
+  FaPhoneAlt,
+  FaMapMarkerAlt,
+  FaCarSide,
+  FaHeart,
+  FaGraduationCap,
+} from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-slate-900 text-white mt-20">
-      <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <footer className="bg-gradient-to-br from-black via-gray-900 to-gray-800 text-gray-300 mt-32">
 
-        {/* Company Info */}
+      <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-3 gap-12">
+
+        {/* BRAND */}
         <div>
-          <h2 className="text-xl font-bold mb-2">Luxury Chauffeur</h2>
-          <p className="text-slate-400 text-sm">
-            Premium chauffeur services for matric dances and weddings.
+          <h2 className="text-2xl font-extrabold text-white mb-4">
+            Luxury Chauffeur
+          </h2>
+          <p className="text-sm leading-relaxed">
+            Premium owner-driven chauffeur services for
+            <span className="text-yellow-400"> matric dances </span>
+            and
+            <span className="text-yellow-400"> weddings</span>.
+            Designed for elegance, comfort, and unforgettable moments.
           </p>
         </div>
 
-        {/* Contact Info */}
+        {/* CONTACT */}
         <div>
-          <h3 className="text-lg font-semibold mb-2">Contact</h3>
-          <p className="text-slate-400 text-sm">📧 Email: info@luxurychauffeur.com</p>
-          <p className="text-slate-400 text-sm">📞 Phone: +27 123 456 789</p>
-          <p className="text-slate-400 text-sm">📍 Location: Johannesburg, South Africa</p>
+          <h3 className="text-lg font-semibold text-white mb-4">Contact</h3>
+
+          <ul className="space-y-3 text-sm">
+            <li className="flex items-center gap-3">
+              <FaEnvelope className="text-yellow-400" />
+              info@luxurychauffeur.com
+            </li>
+            <li className="flex items-center gap-3">
+              <FaPhoneAlt className="text-yellow-400" />
+              +27 123 456 789
+            </li>
+            <li className="flex items-center gap-3">
+              <FaMapMarkerAlt className="text-yellow-400" />
+              Johannesburg, South Africa
+            </li>
+          </ul>
         </div>
 
-        {/* Quick Links */}
+        {/* LINKS */}
         <div>
-          <h3 className="text-lg font-semibold mb-2">Quick Links</h3>
-          <ul className="text-slate-400 text-sm space-y-1">
-            <li>Home</li>
-            <li>Matric Dances</li>
-            <li>Weddings</li>
-            <li>Vehicles</li>
-            <li>Booking</li>
-            <li>Contact</li>
+          <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
+
+          <ul className="space-y-3 text-sm">
+            <li className="flex items-center gap-3 hover:text-yellow-400 transition">
+              <FaCarSide className="text-yellow-400" />
+              <Link to="/">Home</Link>
+            </li>
+            <li className="flex items-center gap-3 hover:text-yellow-400 transition">
+              <FaGraduationCap className="text-yellow-400" />
+              <Link to="/matric-dances">Matric Dances</Link>
+            </li>
+            <li className="flex items-center gap-3 hover:text-yellow-400 transition">
+              <FaHeart className="text-yellow-400" />
+              <Link to="/weddings">Weddings</Link>
+            </li>
+            <li className="flex items-center gap-3 hover:text-yellow-400 transition">
+              <FaCarSide className="text-yellow-400" />
+              <Link to="/vehicles">Vehicles</Link>
+            </li>
+            <li className="flex items-center gap-3 hover:text-yellow-400 transition">
+              <FaCarSide className="text-yellow-400" />
+              <Link to="/booking">Booking</Link>
+            </li>
+            <li className="flex items-center gap-3 hover:text-yellow-400 transition">
+              <FaEnvelope className="text-yellow-400" />
+              <Link to="/contact">Contact</Link>
+            </li>
           </ul>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-slate-700 mt-6 pt-4 text-center text-slate-500 text-xs">
+      {/* COPYRIGHT */}
+      <div className="border-t border-white/10 py-6 text-center text-xs text-gray-500">
         © {new Date().getFullYear()} Luxury Chauffeur. All rights reserved.
       </div>
     </footer>
