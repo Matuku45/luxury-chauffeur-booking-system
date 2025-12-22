@@ -12,5 +12,13 @@
     "email": "m@gmail.com",
     "phone": "tuku2@gmail.com",
     "password": "Motale@18"
+  },
+  {
+    "id": 3,
+    "name": "Manuel Thabiso Mapoulo",
+    "email": "o@gmail.com",
+    "phone": "tuku@gmail.com",
+    "password": "Motale@18",
+    "role": "user"
   }
 ]

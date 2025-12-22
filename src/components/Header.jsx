@@ -52,7 +52,7 @@ const Header = () => {
             { label: "Home", path: "/" },
             { label: "Matric Dances", path: "/matric-dances" },
             { label: "Weddings", path: "/weddings" },
-            { label: "Vehicles", path: "/vehicles" },
+            { label: "Vehicles", path: "/dashboard" },
             { label: "Booking", path: "/booking" },
             { label: "Contact", path: "/contact" },
             { label: "Login", path: "/login" },

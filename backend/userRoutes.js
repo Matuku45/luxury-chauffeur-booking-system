@@ -19,8 +19,7 @@ const DATA_FILE = path.join(__dirname, "users.json");
 // ===================== HELPER FUNCTIONS =====================
 const readUsers = () => {
   try {
-    const data = fs.readFileSync(DATA_FILE, "utf8");
-    return JSON.parse(data);
+    return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
   } catch (err) {
     return [];
   }
@@ -60,17 +59,18 @@ seedDefaultUsers();
 
 // ===================== ROUTES =====================
 
-// CREATE (Signup)
+// CREATE (Signup) — role is always user
 router.post("/signup", (req, res) => {
-  const { name, email, phone, password, role } = req.body;
+  const { name, email, phone, password } = req.body;
 
   if (!name || !email || !phone || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
   const users = readUsers();
-  const exists = users.find((u) => u.email === email);
-  if (exists) return res.status(400).json({ message: "Email already exists" });
+  if (users.find((u) => u.email === email)) {
+    return res.status(400).json({ message: "Email already exists" });
+  }
 
   const newUser = {
     id: users.length + 1,
@@ -78,93 +78,72 @@ router.post("/signup", (req, res) => {
     email,
     phone,
     password,
-    role: role || "user",
+    role: "user", // force role as user
   };
 
   users.push(newUser);
   writeUsers(users);
 
-  // Send back sanitized user info
   const { password: pwd, ...userData } = newUser;
   res.status(201).json({ message: "User signed up", user: userData });
 });
 
-// LOGIN
+// LOGIN — role is returned
 router.post("/login", (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required" });
-  }
+  if (!email || !password) return res.status(400).json({ message: "Email and password required" });
 
   const users = readUsers();
-  const user = users.find(u => u.email === email);
+  const user = users.find((u) => u.email === email);
+  if (!user) return res.status(404).json({ message: "User does not exist" });
+  if (user.password !== password) return res.status(401).json({ message: "Incorrect password" });
 
-  if (!user) {
-    return res.status(404).json({ message: "User does not exist" });
-  }
-
-  if (user.password !== password) {
-    return res.status(401).json({ message: "Incorrect password" });
-  }
-
-  // Create session
-  req.session.user = {
-    id: user.id,
-    name: user.name,
-    role: user.role,
-    email: user.email
-  };
+  // Save session
+  req.session.user = { id: user.id, name: user.name, email: user.email, role: user.role };
   req.session.save();
 
-  // Send sanitized user object
   const { password: pwd, ...userData } = user;
   res.json({ message: "Login successful", user: userData });
 });
 
-// READ ALL USERS
+// GET all users
 router.get("/", (req, res) => {
-  const users = readUsers().map(u => {
-    const { password, ...userData } = u;
-    return userData;
-  });
+  const users = readUsers().map(({ password, ...rest }) => rest);
   res.json(users);
 });
 
-// READ ONE USER
+// GET single user
 router.get("/:id", (req, res) => {
   const { id } = req.params;
-  const users = readUsers();
-  const user = users.find((u) => u.id == id);
+  const user = readUsers().find((u) => u.id == id);
   if (!user) return res.status(404).json({ message: "User not found" });
 
   const { password, ...userData } = user;
   res.json(userData);
 });
 
-// UPDATE USER
+// UPDATE user
 router.put("/:id", (req, res) => {
   const { id } = req.params;
   const users = readUsers();
-  const userIndex = users.findIndex((u) => u.id == id);
-  if (userIndex === -1) return res.status(404).json({ message: "User not found" });
+  const idx = users.findIndex(u => u.id == id);
+  if (idx === -1) return res.status(404).json({ message: "User not found" });
 
-  const updatedUser = { ...users[userIndex], ...req.body };
-  users[userIndex] = updatedUser;
+  const updatedUser = { ...users[idx], ...req.body };
+  users[idx] = updatedUser;
   writeUsers(users);
 
   const { password, ...userData } = updatedUser;
   res.json({ message: "User updated", user: userData });
 });
 
-// DELETE USER
+// DELETE user
 router.delete("/:id", (req, res) => {
   const { id } = req.params;
   let users = readUsers();
-  const user = users.find((u) => u.id == id);
-  if (!user) return res.status(404).json({ message: "User not found" });
+  if (!users.find(u => u.id == id)) return res.status(404).json({ message: "User not found" });
 
-  users = users.filter((u) => u.id != id);
+  users = users.filter(u => u.id != id);
   writeUsers(users);
 
   res.json({ message: `User ${id} deleted` });

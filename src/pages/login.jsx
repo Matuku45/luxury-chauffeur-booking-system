@@ -1,45 +1,65 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
 
+  // Dummy credentials for front-end simulation
+  const dummyAdmin = {
+    name: "Admin User",
+    email: "admin@example.com",
+    password: "admin123",
+    role: "admin",
+  };
+
+  const dummyUser = {
+    name: "Regular User",
+    email: "user@example.com",
+    password: "user123",
+    role: "user",
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check if credentials match dummy admin/user
+    let user = null;
+    if (formData.email === dummyAdmin.email && formData.password === dummyAdmin.password) {
+      user = dummyAdmin;
+    } else if (formData.email === dummyUser.email && formData.password === dummyUser.password) {
+      user = dummyUser;
+    }
+
+    if (!user) {
+      return alert("Invalid credentials!");
+    }
+
+    // Send to backend
     try {
-      const res = await axios.post("http://localhost:5000/api/users/login", formData);
+      const res = await axios.post("http://localhost:5000/api/users/login", {
+        email: user.email,
+        password: user.password
+      });
 
-      if (res.status === 200) {
-        const { name, email, role } = res.data.user;
+      // Save user info
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      alert(`Login successful! Welcome ${res.data.user.name}`);
 
-        // Save to localStorage
-        localStorage.setItem("user", JSON.stringify({ name, email, role }));
-
-        alert("Login successful!");
-
-        // Redirect based on role
-        if (role === "admin") {
-          navigate("/dashboard");
-        } else {
-          navigate("/booking");
-        }
+      // Redirect based on role
+      if (res.data.user.role === "admin") {
+        navigate("/dashboard");
+      } else {
+        navigate("/booking");
       }
     } catch (error) {
-      console.error(error);
-      if (error.response && error.response.status === 401) {
-        alert("Invalid credentials!");
-      } else if (error.response && error.response.status === 404) {
-        alert("User does not exist!");
-      } else {
-        alert("Something went wrong. Please try again.");
-      }
+      alert("Something went wrong. Backend might not be running.");
     }
   };
 
@@ -77,13 +97,6 @@ const Login = () => {
             Login
           </button>
         </form>
-
-        <p className="mt-4 text-center text-sm text-slate-600">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-blue-600 hover:underline">
-            Sign up
-          </Link>
-        </p>
       </div>
     </section>
   );
