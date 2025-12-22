@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -10,12 +11,25 @@ const Login = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login Data:", formData);
-    alert("Login submitted! (Backend integration pending)");
-    // TODO: implement login API
-    navigate("/"); // redirect to home after login
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/users/login", formData);
+      
+      if (res.status === 200) {
+        alert("Login successful!");
+        // Redirect to Booking page
+        navigate("/booking");
+      }
+    } catch (error) {
+      console.error(error);
+      if (error.response && error.response.status === 401) {
+        alert("Invalid credentials!");
+      } else {
+        alert("Something went wrong. Please try again.");
+      }
+    }
   };
 
   return (
