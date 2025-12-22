@@ -15,7 +15,7 @@ const Login = () => {
   };
 
   const dummyUser = {
-    name: "Regular User",
+    name: "Regular u User",
     email: "user@example.com",
     password: "user123",
     role: "user",
