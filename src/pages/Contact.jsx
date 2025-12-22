@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { FaEnvelope, FaPhoneAlt, FaUser, FaCommentDots } from "react-icons/fa";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -16,88 +18,129 @@ const Contact = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Contact Submitted:", formData);
-    alert("Thank you for reaching out! We will get back to you shortly.");
-    // TODO: send formData to backend or email API
+    alert("Thank you for reaching out! We’ll respond shortly.");
   };
 
   return (
-    <section className="max-w-3xl mx-auto px-6 pt-32 pb-20">
-      <h1 className="text-4xl font-bold mb-6">Contact Us</h1>
+    <section className="relative overflow-hidden pt-32 pb-28 bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white">
 
-      <p className="mb-6">
-        Have a question or special request? Fill out the form below and our team
-        will respond as soon as possible.
-      </p>
+      {/* Background Glow */}
+      <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-yellow-400/20 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-0 -left-40 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-3xl"></div>
 
-      <form
-        className="bg-white shadow-md rounded-xl p-6 space-y-4"
-        onSubmit={handleSubmit}
-      >
-        {/* Name */}
-        <div>
-          <label className="block mb-1 font-semibold">Name</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-2"
-            required
-          />
-        </div>
+      <div className="relative max-w-3xl mx-auto px-6">
 
-        {/* Email */}
-        <div>
-          <label className="block mb-1 font-semibold">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-2"
-            required
-          />
-        </div>
+        {/* HEADER */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-4">
+            Get in
+            <span className="block bg-gradient-to-r from-yellow-400 to-white bg-clip-text text-transparent">
+              Touch With Us
+            </span>
+          </h1>
 
-        {/* Phone */}
-        <div>
-          <label className="block mb-1 font-semibold">Phone Number</label>
-          <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-2"
-          />
-        </div>
+          <p className="text-gray-300">
+            Questions, special requests, or custom arrangements?
+            Our team is here to assist you.
+          </p>
+        </motion.div>
 
-        {/* Message */}
-        <div>
-          <label className="block mb-1 font-semibold">Message</label>
-          <textarea
-            name="message"
-            value={formData.message}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-2"
-            rows={5}
-            placeholder="Write your message here..."
-            required
-          ></textarea>
-        </div>
+        {/* FORM */}
+        <motion.form
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+          onSubmit={handleSubmit}
+          className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 space-y-6 shadow-2xl"
+        >
 
-        {/* Submit Button */}
-        <button type="submit" className="luxury-button w-full mt-4">
-          Send Message
-        </button>
-      </form>
+          {/* NAME */}
+          <FormGroup label="Full Name" icon={<FaUser />}>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="form-input"
+              required
+            />
+          </FormGroup>
 
-      {/* Optional Contact Info */}
-      <div className="mt-10 text-center text-slate-700">
-        <p>📧 Email: info@luxurychauffeur.com</p>
-        <p>📞 Phone: +27 123 456 789</p>
+          {/* EMAIL */}
+          <FormGroup label="Email Address" icon={<FaEnvelope />}>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="form-input"
+              required
+            />
+          </FormGroup>
+
+          {/* PHONE */}
+          <FormGroup label="Phone Number" icon={<FaPhoneAlt />}>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="form-input"
+            />
+          </FormGroup>
+
+          {/* MESSAGE */}
+          <FormGroup label="Your Message" icon={<FaCommentDots />}>
+            <textarea
+              name="message"
+              rows="5"
+              value={formData.message}
+              onChange={handleChange}
+              placeholder="Tell us how we can help you..."
+              className="form-input"
+              required
+            />
+          </FormGroup>
+
+          {/* SUBMIT */}
+          <button
+            type="submit"
+            className="w-full mt-6 py-4 rounded-2xl bg-yellow-400 text-black font-semibold hover:bg-yellow-300 transition shadow-lg"
+          >
+            Send Message
+          </button>
+        </motion.form>
+
+        {/* CONTACT INFO */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-12 text-center text-gray-300 space-y-2"
+        >
+          <p>📧 Email: <span className="text-white">info@luxurychauffeur.com</span></p>
+          <p>📞 Phone: <span className="text-white">+27 123 456 789</span></p>
+        </motion.div>
       </div>
     </section>
   );
 };
+
+/* ---------- Reusable Field ---------- */
+
+const FormGroup = ({ label, icon, children }) => (
+  <div>
+    <label className="block mb-2 font-semibold text-sm text-gray-200">
+      {icon && <span className="inline-block mr-2 text-yellow-400">{icon}</span>}
+      {label}
+    </label>
+    {children}
+  </div>
+);
 
 export default Contact;
