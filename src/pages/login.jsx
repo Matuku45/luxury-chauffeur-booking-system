@@ -17,19 +17,26 @@ const Login = () => {
       const res = await axios.post("http://localhost:5000/api/users/login", formData);
 
       if (res.status === 200) {
-        // Assume backend returns user info: { name, email }
-        const { name, email } = res.data.user;
+        const { name, email, role } = res.data.user;
 
-        // Save to localStorage to use in Booking page
-        localStorage.setItem("user", JSON.stringify({ name, email }));
+        // Save to localStorage
+        localStorage.setItem("user", JSON.stringify({ name, email, role }));
 
         alert("Login successful!");
-        navigate("/booking");
+
+        // Redirect based on role
+        if (role === "admin") {
+          navigate("/dashboard");
+        } else {
+          navigate("/booking");
+        }
       }
     } catch (error) {
       console.error(error);
       if (error.response && error.response.status === 401) {
         alert("Invalid credentials!");
+      } else if (error.response && error.response.status === 404) {
+        alert("User does not exist!");
       } else {
         alert("Something went wrong. Please try again.");
       }
