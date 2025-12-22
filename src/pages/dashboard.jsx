@@ -8,29 +8,27 @@ const Dashboard = () => {
   const [payments, setPayments] = useState([]);
 
   useEffect(() => {
-    // Fetch bookings from backend
-    const fetchBookings = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/bookings");
-        setBookings(res.data);
-      } catch (err) {
-        console.error("Error fetching bookings:", err);
-      }
-    };
-
-    // Fetch payments from backend (dummy for now)
-    const fetchPayments = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/payments"); // Create /api/payments route or use dummy
-        setPayments(res.data);
-      } catch (err) {
-        console.error("Error fetching payments:", err);
-      }
-    };
-
     fetchBookings();
     fetchPayments();
   }, []);
+
+  const fetchBookings = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/bookings");
+      setBookings(res.data);
+    } catch (err) {
+      console.error("Error fetching bookings:", err);
+    }
+  };
+
+  const fetchPayments = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/payments");
+      setPayments(res.data);
+    } catch (err) {
+      console.error("Error fetching payments:", err);
+    }
+  };
 
   const totalRevenue = payments.reduce((sum, p) => (p.status === "Paid" ? sum + p.amount : sum), 0);
   const totalBookings = bookings.length;
@@ -48,6 +46,25 @@ const Dashboard = () => {
         return <span className="text-red-600 font-semibold flex items-center"><FaTimesCircle className="mr-1"/> {status}</span>;
       default:
         return status;
+    }
+  };
+
+  const handleUpdateStatus = async (bookingId) => {
+    try {
+      // Toggle status for demo: Pending → Confirmed → Cancelled
+      const booking = bookings.find(b => b.id === bookingId);
+      let newStatus = "Confirmed";
+      if (booking.status === "Confirmed") newStatus = "Cancelled";
+      if (booking.status === "Cancelled") newStatus = "Pending";
+
+      // Update backend
+      await axios.patch(`http://localhost:5000/api/bookings/${bookingId}`, { status: newStatus });
+
+      // Update frontend state
+      setBookings(bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b));
+    } catch (err) {
+      console.error("Error updating status:", err);
+      alert("Failed to update booking status.");
     }
   };
 
@@ -90,6 +107,7 @@ const Dashboard = () => {
                 <th className="py-2 px-4">Pick-Up Date</th>
                 <th className="py-2 px-4">Status</th>
                 <th className="py-2 px-4">Confirmed</th>
+                <th className="py-2 px-4">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -102,6 +120,14 @@ const Dashboard = () => {
                   <td className="py-2 px-4">{booking.pickUpDate}</td>
                   <td className="py-2 px-4">{getStatusBadge(booking.status)}</td>
                   <td className="py-2 px-4">{booking.confirmed ? "✅" : "❌"}</td>
+                  <td className="py-2 px-4">
+                    <button
+                      onClick={() => handleUpdateStatus(booking.id)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm"
+                    >
+                      Update Status
+                    </button>
+                  </td>
                 </motion.tr>
               ))}
             </tbody>
