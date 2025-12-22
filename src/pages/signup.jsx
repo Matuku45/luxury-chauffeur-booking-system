@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ const Signup = () => {
     confirmPassword: "",
   });
 
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -17,7 +19,7 @@ const Signup = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
@@ -25,16 +27,35 @@ const Signup = () => {
       return;
     }
 
-    console.log("Signup Data:", formData);
-    alert("Signup submitted! (Backend integration pending)");
-    // TODO: implement signup API
-    navigate("/login"); // redirect to login after signup
+    setLoading(true);
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/users/signup", {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+      });
+
+      alert(res.data.message);
+      navigate("/login");
+    } catch (err) {
+      if (err.response) {
+        alert(err.response.data.message);
+      } else {
+        alert("Something went wrong. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <section className="flex justify-center items-center min-h-screen bg-slate-100 px-6">
-      <div className="bg-white shadow-md rounded-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-center">Sign Up</h1>
+    <section className="flex justify-center items-center min-h-screen bg-slate-900 px-6">
+      <div className="bg-slate-800 shadow-lg rounded-xl p-8 w-full max-w-md text-white">
+        <h1 className="text-3xl font-bold mb-6 text-center text-yellow-400">
+          Sign Up
+        </h1>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           {/* Name */}
@@ -45,7 +66,7 @@ const Signup = () => {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full border rounded-lg p-2"
+              className="w-full border border-slate-600 rounded-lg p-2 bg-slate-700 text-white"
               required
             />
           </div>
@@ -58,7 +79,7 @@ const Signup = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full border rounded-lg p-2"
+              className="w-full border border-slate-600 rounded-lg p-2 bg-slate-700 text-white"
               required
             />
           </div>
@@ -71,7 +92,7 @@ const Signup = () => {
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              className="w-full border rounded-lg p-2"
+              className="w-full border border-slate-600 rounded-lg p-2 bg-slate-700 text-white"
               required
             />
           </div>
@@ -84,7 +105,7 @@ const Signup = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full border rounded-lg p-2"
+              className="w-full border border-slate-600 rounded-lg p-2 bg-slate-700 text-white"
               required
             />
           </div>
@@ -97,20 +118,24 @@ const Signup = () => {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className="w-full border rounded-lg p-2"
+              className="w-full border border-slate-600 rounded-lg p-2 bg-slate-700 text-white"
               required
             />
           </div>
 
           {/* Submit */}
-          <button type="submit" className="luxury-button w-full mt-4">
-            Sign Up
+          <button
+            type="submit"
+            className="luxury-button w-full mt-4 bg-yellow-400 text-slate-900 font-bold hover:bg-yellow-300 transition"
+            disabled={loading}
+          >
+            {loading ? "Signing Up..." : "Sign Up"}
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-slate-600">
+        <p className="mt-4 text-center text-sm text-slate-300">
           Already have an account?{" "}
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" className="text-yellow-400 hover:underline">
             Login
           </Link>
         </p>
