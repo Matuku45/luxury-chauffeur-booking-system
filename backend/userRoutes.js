@@ -6,7 +6,7 @@ const path = require("path");
 const router = express.Router();
 const DATA_FILE = path.join(__dirname, "users.json");
 
-// --- SESSION SETUP (use in your main app.js) ---
+// ===================== SESSION SETUP (use in your main app.js) =====================
 // const app = express();
 // app.use(express.json());
 // app.use(session({
@@ -16,7 +16,7 @@ const DATA_FILE = path.join(__dirname, "users.json");
 //   cookie: { maxAge: 1000 * 60 * 60 * 2 } // 2 hours
 // }));
 
-// --- Helper Functions ---
+// ===================== HELPER FUNCTIONS =====================
 const readUsers = () => {
   try {
     const data = fs.readFileSync(DATA_FILE, "utf8");
@@ -30,7 +30,7 @@ const writeUsers = (users) => {
   fs.writeFileSync(DATA_FILE, JSON.stringify(users, null, 2));
 };
 
-// --- Seed Default Users ---
+// Seed default users if file is empty
 const seedDefaultUsers = () => {
   const users = readUsers();
   if (users.length === 0) {
@@ -58,7 +58,7 @@ const seedDefaultUsers = () => {
 };
 seedDefaultUsers();
 
-// ===================== CRUD ROUTES =====================
+// ===================== ROUTES =====================
 
 // CREATE (Signup)
 router.post("/signup", (req, res) => {
@@ -78,33 +78,56 @@ router.post("/signup", (req, res) => {
     email,
     phone,
     password,
-    role: role || "user", // optional role
+    role: role || "user",
   };
 
   users.push(newUser);
   writeUsers(users);
 
-  res.status(201).json({ message: "User signed up", user: newUser });
+  // Send back sanitized user info
+  const { password: pwd, ...userData } = newUser;
+  res.status(201).json({ message: "User signed up", user: userData });
 });
 
 // LOGIN
 router.post("/login", (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
   const users = readUsers();
+  const user = users.find(u => u.email === email);
 
-  const user = users.find((u) => u.email === email && u.password === password);
-  if (!user) return res.status(401).json({ message: "Invalid credentials" });
+  if (!user) {
+    return res.status(404).json({ message: "User does not exist" });
+  }
 
-  // Create session (in-memory)
-  req.session.user = { id: user.id, name: user.name, role: user.role };
+  if (user.password !== password) {
+    return res.status(401).json({ message: "Incorrect password" });
+  }
+
+  // Create session
+  req.session.user = {
+    id: user.id,
+    name: user.name,
+    role: user.role,
+    email: user.email
+  };
   req.session.save();
 
-  res.json({ message: "User logged in", user });
+  // Send sanitized user object
+  const { password: pwd, ...userData } = user;
+  res.json({ message: "Login successful", user: userData });
 });
 
 // READ ALL USERS
 router.get("/", (req, res) => {
-  const users = readUsers();
+  const users = readUsers().map(u => {
+    const { password, ...userData } = u;
+    return userData;
+  });
   res.json(users);
 });
 
@@ -114,7 +137,9 @@ router.get("/:id", (req, res) => {
   const users = readUsers();
   const user = users.find((u) => u.id == id);
   if (!user) return res.status(404).json({ message: "User not found" });
-  res.json(user);
+
+  const { password, ...userData } = user;
+  res.json(userData);
 });
 
 // UPDATE USER
@@ -128,7 +153,8 @@ router.put("/:id", (req, res) => {
   users[userIndex] = updatedUser;
   writeUsers(users);
 
-  res.json({ message: "User updated", user: updatedUser });
+  const { password, ...userData } = updatedUser;
+  res.json({ message: "User updated", user: userData });
 });
 
 // DELETE USER
