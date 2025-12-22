@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { FaCar, FaDollarSign, FaClipboardList, FaCheckCircle, FaTimesCircle, FaHourglassHalf } from "react-icons/fa";
+import { FaCar, FaDollarSign, FaClipboardList, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaPlus, FaTimes } from "react-icons/fa";
 
 const Dashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [cars, setCars] = useState([]);
+  const [showAddCar, setShowAddCar] = useState(false);
+  const [newCar, setNewCar] = useState({ name: "", reg: "", seats: 4, image: "" });
 
   useEffect(() => {
     fetchBookings();
     fetchPayments();
+    fetchCars();
   }, []);
 
   const fetchBookings = async () => {
@@ -30,6 +34,34 @@ const Dashboard = () => {
     }
   };
 
+  const fetchCars = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/cars");
+      setCars(res.data);
+    } catch (err) {
+      console.error("Error fetching cars:", err);
+    }
+  };
+
+  const handleAddCarChange = (e) => {
+    const { name, value } = e.target;
+    setNewCar(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddCarSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post("http://localhost:5000/api/cars", newCar);
+      setCars(prev => [...prev, res.data.car]);
+      setNewCar({ name: "", reg: "", seats: 4, image: "" });
+      setShowAddCar(false);
+      alert("Car added successfully!");
+    } catch (err) {
+      console.error("Error adding car:", err);
+      alert("Failed to add car. Try again.");
+    }
+  };
+
   const totalRevenue = payments.reduce((sum, p) => (p.status === "Paid" ? sum + p.amount : sum), 0);
   const totalBookings = bookings.length;
   const pendingPayments = payments.filter(p => p.status === "Pending").length;
@@ -42,29 +74,11 @@ const Dashboard = () => {
       case "Pending":
         return <span className="text-yellow-600 font-semibold flex items-center"><FaHourglassHalf className="mr-1"/> {status}</span>;
       case "Cancelled":
+      case "Declined":
       case "Refunded":
         return <span className="text-red-600 font-semibold flex items-center"><FaTimesCircle className="mr-1"/> {status}</span>;
       default:
         return status;
-    }
-  };
-
-  const handleUpdateStatus = async (bookingId) => {
-    try {
-      // Toggle status for demo: Pending → Confirmed → Cancelled
-      const booking = bookings.find(b => b.id === bookingId);
-      let newStatus = "Confirmed";
-      if (booking.status === "Confirmed") newStatus = "Cancelled";
-      if (booking.status === "Cancelled") newStatus = "Pending";
-
-      // Update backend
-      await axios.patch(`http://localhost:5000/api/bookings/${bookingId}`, { status: newStatus });
-
-      // Update frontend state
-      setBookings(bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b));
-    } catch (err) {
-      console.error("Error updating status:", err);
-      alert("Failed to update booking status.");
     }
   };
 
@@ -93,6 +107,77 @@ const Dashboard = () => {
         </motion.div>
       </div>
 
+      {/* Add Car Button */}
+      <div className="mb-6 flex justify-end">
+        <button
+          onClick={() => setShowAddCar(prev => !prev)}
+          className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-xl hover:bg-purple-400 transition"
+        >
+          {showAddCar ? <FaTimes /> : <FaPlus />}
+          {showAddCar ? "Cancel" : "Add Car"}
+        </button>
+      </div>
+
+      {/* Add Car Form */}
+      {showAddCar && (
+        <motion.form
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          onSubmit={handleAddCarSubmit}
+          className="bg-white p-6 rounded-3xl shadow-lg mb-8 grid grid-cols-1 md:grid-cols-2 gap-4"
+        >
+          <div>
+            <label className="block font-semibold mb-1">Car Name</label>
+            <input type="text" name="name" value={newCar.name} onChange={handleAddCarChange} className="form-input w-full"/>
+          </div>
+          <div>
+            <label className="block font-semibold mb-1">Registration Number</label>
+            <input type="text" name="reg" value={newCar.reg} onChange={handleAddCarChange} className="form-input w-full"/>
+          </div>
+          <div>
+            <label className="block font-semibold mb-1">Seats</label>
+            <input type="number" name="seats" min={1} value={newCar.seats} onChange={handleAddCarChange} className="form-input w-full"/>
+          </div>
+          <div>
+            <label className="block font-semibold mb-1">Image URL</label>
+            <input type="text" name="image" value={newCar.image} onChange={handleAddCarChange} className="form-input w-full"/>
+          </div>
+          <div className="md:col-span-2 flex justify-end">
+            <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 transition">Add Car</button>
+          </div>
+        </motion.form>
+      )}
+
+      {/* Cars Table */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Cars Overview</h2>
+        <div className="overflow-x-auto bg-white rounded-3xl shadow-lg p-4">
+          <table className="min-w-full text-left text-sm md:text-base">
+            <thead>
+              <tr className="border-b-2 border-gray-200">
+                <th className="py-2 px-4">Name</th>
+                <th className="py-2 px-4">Reg Number</th>
+                <th className="py-2 px-4">Seats</th>
+                <th className="py-2 px-4">Image</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cars.map(car => (
+                <motion.tr key={car.id} whileHover={{ scale: 1.02 }} className="border-b hover:bg-gray-50 transition">
+                  <td className="py-2 px-4">{car.name}</td>
+                  <td className="py-2 px-4">{car.reg}</td>
+                  <td className="py-2 px-4">{car.seats}</td>
+                  <td className="py-2 px-4">
+                    {car.image && <img src={car.image} alt={car.name} className="w-20 h-12 object-cover rounded" />}
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Bookings Table */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Bookings Overview</h2>
@@ -107,7 +192,6 @@ const Dashboard = () => {
                 <th className="py-2 px-4">Pick-Up Date</th>
                 <th className="py-2 px-4">Status</th>
                 <th className="py-2 px-4">Confirmed</th>
-                <th className="py-2 px-4">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -120,14 +204,6 @@ const Dashboard = () => {
                   <td className="py-2 px-4">{booking.pickUpDate}</td>
                   <td className="py-2 px-4">{getStatusBadge(booking.status)}</td>
                   <td className="py-2 px-4">{booking.confirmed ? "✅" : "❌"}</td>
-                  <td className="py-2 px-4">
-                    <button
-                      onClick={() => handleUpdateStatus(booking.id)}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm"
-                    >
-                      Update Status
-                    </button>
-                  </td>
                 </motion.tr>
               ))}
             </tbody>

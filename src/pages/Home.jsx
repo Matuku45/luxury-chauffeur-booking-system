@@ -31,16 +31,16 @@ const Home = () => {
 
           <div className="flex gap-4">
             <a
-              href="/book"
+              href="/booking"
               className="px-8 py-4 bg-yellow-400 text-black font-semibold rounded-xl hover:bg-yellow-300 transition"
             >
-              Book Now
+              User
             </a>
             <a
-              href="/packages"
+              href="/dashboard"
               className="px-8 py-4 border border-gray-400 rounded-xl hover:bg-white hover:text-black transition"
             >
-              View Packages
+            Admin
             </a>
           </div>
         </motion.div>

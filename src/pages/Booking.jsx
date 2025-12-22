@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FaCalendarAlt, FaMapMarkerAlt, FaUser, FaEnvelope, FaPhone, FaCar, FaHome, FaHistory } from "react-icons/fa";
+import { FaCalendarAlt, FaMapMarkerAlt, FaUser, FaEnvelope, FaPhone, FaCar, FaHome, FaHistory, FaTimes } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Booking = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState({ name: "", email: "" });
-  const [showForm, setShowForm] = useState(false);
   const [selectedCar, setSelectedCar] = useState(null);
-
   const [formData, setFormData] = useState({
     eventType: "Matric Dance",
     pickUpDate: "",
@@ -27,7 +26,11 @@ const Booking = () => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (storedUser) {
       setUser(storedUser);
-      setFormData(prev => ({ ...prev, clientName: storedUser.name, clientEmail: storedUser.email }));
+      setFormData(prev => ({
+        ...prev,
+        clientName: storedUser.name,
+        clientEmail: storedUser.email,
+      }));
     }
   }, []);
 
@@ -36,17 +39,38 @@ const Booking = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Booking Submitted:", formData, "Car:", selectedCar);
-    alert("Booking confirmed! Our team will contact you soon.");
-    setShowForm(false);
-    setSelectedCar(null);
+    if (!selectedCar) return;
+
+    const bookingPayload = {
+      ...formData,
+      carName: selectedCar.name,
+      carRegNumber: selectedCar.reg,
+      price: 500,
+    };
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/bookings", bookingPayload);
+      alert("Booking confirmed! Booking ID: " + res.data.booking.id);
+      setSelectedCar(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit booking. Try again.");
+    }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("user");
-    navigate("/"); // Navigate to home page
+    navigate("/");
+  };
+
+  const toggleForm = (car) => {
+    if (selectedCar?.reg === car.reg) {
+      setSelectedCar(null); // collapse if clicked again
+    } else {
+      setSelectedCar(car);
+    }
   };
 
   const cars = [
@@ -71,210 +95,118 @@ const Booking = () => {
             <p className="font-semibold">{user.name}</p>
             <p className="text-sm text-gray-600">{user.email}</p>
           </div>
-
           <nav className="flex flex-col gap-3">
             <button
               onClick={() => navigate("/")}
               className="flex items-center gap-2 p-3 rounded-xl bg-purple-100 hover:bg-purple-200 transition"
-            >
-              <FaHome /> Home
-            </button>
-            <button className="flex items-center gap-2 p-3 rounded-xl bg-purple-100 hover:bg-purple-200 transition">
-              <FaCar /> Cars
-            </button>
-            <button className="flex items-center gap-2 p-3 rounded-xl bg-purple-100 hover:bg-purple-200 transition">
-              <FaHistory /> Booking History
-            </button>
+            ><FaHome /> Home</button>
+            <button className="flex items-center gap-2 p-3 rounded-xl bg-purple-100 hover:bg-purple-200 transition"><FaCar /> Cars</button>
+            <button className="flex items-center gap-2 p-3 rounded-xl bg-purple-100 hover:bg-purple-200 transition"><FaHistory /> Booking History</button>
           </nav>
         </div>
-
         <button
           onClick={handleLogout}
           className="mt-6 w-full py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-400 transition"
-        >
-          Logout
-        </button>
+        >Logout</button>
       </motion.div>
 
       {/* Main Content */}
       <div className="flex-1 p-6">
-        <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-purple-700">
-          Select a Car to Book
-        </h1>
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-purple-700">Select a Car to Book</h1>
 
         {/* Car Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-6">
+        <div className="grid md:grid-cols-3 gap-6">
           {cars.map((car, index) => (
-            <motion.div
-              key={index}
-              onClick={() => { setSelectedCar(car); setShowForm(true); }}
-              whileHover={{ scale: 1.05 }}
-              className="cursor-pointer bg-gradient-to-tr from-purple-200 to-pink-200 rounded-3xl shadow-xl overflow-hidden relative"
-            >
-              <img src={car.image} alt={car.name} className="w-full h-40 object-cover" />
-              <div className="p-4 bg-white/80">
-                <h3 className="font-bold text-lg">{car.name}</h3>
-                <p className="text-sm text-gray-700">Reg: {car.reg}</p>
-                <p className="text-sm text-gray-700">Seats: {car.seats}</p>
-              </div>
-            </motion.div>
+            <div key={index}>
+              <motion.div
+                onClick={() => toggleForm(car)}
+                whileHover={{ scale: 1.05 }}
+                className={`cursor-pointer rounded-3xl shadow-xl overflow-hidden relative transition-all duration-300
+                  ${selectedCar?.reg === car.reg ? "ring-4 ring-purple-400" : "bg-gradient-to-tr from-purple-200 to-pink-200"}`}
+              >
+                <img src={car.image} alt={car.name} className="w-full h-40 object-cover" />
+                <div className="p-4 bg-white/80">
+                  <h3 className="font-bold text-lg">{car.name}</h3>
+                  <p className="text-sm text-gray-700">Reg: {car.reg}</p>
+                  <p className="text-sm text-gray-700">Seats: {car.seats}</p>
+                </div>
+              </motion.div>
+
+              {/* Collapsible Booking Form */}
+              {selectedCar?.reg === car.reg && (
+                <motion.form
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.5 }}
+                  onSubmit={handleSubmit}
+                  className="bg-white p-6 rounded-3xl shadow-lg mt-4 space-y-4 relative"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCar(null)}
+                    className="absolute top-3 right-3 text-gray-500 hover:text-red-500 transition"
+                  ><FaTimes /></button>
+
+                  <h2 className="text-xl font-bold text-purple-700 mb-2">Booking: {selectedCar.name}</h2>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <FormGroup label="Event Type">
+                      <select name="eventType" value={formData.eventType} onChange={handleChange} className="form-input">
+                        <option>Matric Dance</option>
+                        <option>Wedding</option>
+                        <option>Birthday</option>
+                        <option>Corporate Event</option>
+                      </select>
+                    </FormGroup>
+                    <FormGroup label="Pick-up Date" icon={<FaCalendarAlt />}>
+                      <input type="date" name="pickUpDate" value={formData.pickUpDate} onChange={handleChange} className="form-input"/>
+                    </FormGroup>
+                    <FormGroup label="Pick-up Time">
+                      <input type="time" name="pickUpTime" value={formData.pickUpTime} onChange={handleChange} className="form-input"/>
+                    </FormGroup>
+                    <FormGroup label="Pick-up Location" icon={<FaMapMarkerAlt />}>
+                      <input type="text" name="pickUpLocation" value={formData.pickUpLocation} onChange={handleChange} className="form-input"/>
+                    </FormGroup>
+                    <FormGroup label="Destination" icon={<FaMapMarkerAlt />}>
+                      <input type="text" name="destination" value={formData.destination} onChange={handleChange} className="form-input"/>
+                    </FormGroup>
+                    <FormGroup label="Duration">
+                      <select name="duration" value={formData.duration} onChange={handleChange} className="form-input">
+                        <option>2 hours</option>
+                        <option>4 hours</option>
+                        <option>Full Evening</option>
+                      </select>
+                    </FormGroup>
+                    <FormGroup label="Passengers">
+                      <input type="number" min={1} name="passengers" value={formData.passengers} onChange={handleChange} className="form-input"/>
+                    </FormGroup>
+                    <FormGroup label="Your Name" icon={<FaUser />}>
+                      <input type="text" name="clientName" value={formData.clientName} onChange={handleChange} className="form-input"/>
+                    </FormGroup>
+                    <FormGroup label="Email Address" icon={<FaEnvelope />}>
+                      <input type="email" name="clientEmail" value={formData.clientEmail} onChange={handleChange} className="form-input"/>
+                    </FormGroup>
+                    <FormGroup label="Phone Number" icon={<FaPhone />}>
+                      <input type="tel" name="clientPhone" value={formData.clientPhone} onChange={handleChange} className="form-input"/>
+                    </FormGroup>
+                    <FormGroup label="Special Requests">
+                      <textarea name="specialRequests" rows="2" value={formData.specialRequests} onChange={handleChange} placeholder="Red carpet, ribbons, etc." className="form-input"/>
+                    </FormGroup>
+                  </div>
+
+                  <button type="submit" className="w-full py-2 rounded-xl bg-purple-500 text-white font-bold hover:bg-purple-400 transition">Confirm Booking</button>
+                </motion.form>
+              )}
+            </div>
           ))}
         </div>
-
-        {/* Booking Form */}
-        {showForm && selectedCar && (
-          <motion.form
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            onSubmit={handleSubmit}
-            className="bg-white/90 p-6 rounded-3xl shadow-lg max-w-3xl mx-auto space-y-5"
-          >
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">
-              Booking: {selectedCar.name}
-            </h2>
-
-            <p className="font-semibold text-gray-700">Registration Number: {selectedCar.reg}</p>
-            <p className="font-semibold text-gray-700">Seats: {selectedCar.seats}</p>
-
-            {/* Event Type */}
-            <FormGroup label="Event Type">
-              <select
-                name="eventType"
-                value={formData.eventType}
-                onChange={handleChange}
-                className="form-input"
-              >
-                <option>Matric Dance</option>
-                <option>Wedding</option>
-                <option>Birthday</option>
-                <option>Corporate Event</option>
-              </select>
-            </FormGroup>
-
-            {/* Date & Time */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <FormGroup label="Pick-up Date" icon={<FaCalendarAlt />}>
-                <input
-                  type="date"
-                  name="pickUpDate"
-                  value={formData.pickUpDate}
-                  onChange={handleChange}
-                  className="form-input"
-                />
-              </FormGroup>
-              <FormGroup label="Pick-up Time">
-                <input
-                  type="time"
-                  name="pickUpTime"
-                  value={formData.pickUpTime}
-                  onChange={handleChange}
-                  className="form-input"
-                />
-              </FormGroup>
-            </div>
-
-            {/* Locations */}
-            <FormGroup label="Pick-up Location" icon={<FaMapMarkerAlt />}>
-              <input
-                type="text"
-                name="pickUpLocation"
-                value={formData.pickUpLocation}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </FormGroup>
-            <FormGroup label="Destination" icon={<FaMapMarkerAlt />}>
-              <input
-                type="text"
-                name="destination"
-                value={formData.destination}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </FormGroup>
-
-            {/* Duration & Passengers */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <FormGroup label="Duration">
-                <select
-                  name="duration"
-                  value={formData.duration}
-                  onChange={handleChange}
-                  className="form-input"
-                >
-                  <option>2 hours</option>
-                  <option>4 hours</option>
-                  <option>Full Evening</option>
-                </select>
-              </FormGroup>
-              <FormGroup label="Passengers">
-                <input
-                  type="number"
-                  min={1}
-                  name="passengers"
-                  value={formData.passengers}
-                  onChange={handleChange}
-                  className="form-input"
-                />
-              </FormGroup>
-            </div>
-
-            {/* Client Info */}
-            <FormGroup label="Your Name" icon={<FaUser />}>
-              <input
-                type="text"
-                name="clientName"
-                value={formData.clientName}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </FormGroup>
-            <FormGroup label="Email Address" icon={<FaEnvelope />}>
-              <input
-                type="email"
-                name="clientEmail"
-                value={formData.clientEmail}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </FormGroup>
-            <FormGroup label="Phone Number" icon={<FaPhone />}>
-              <input
-                type="tel"
-                name="clientPhone"
-                value={formData.clientPhone}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </FormGroup>
-
-            {/* Special Requests */}
-            <FormGroup label="Special Requests">
-              <textarea
-                name="specialRequests"
-                rows="3"
-                value={formData.specialRequests}
-                onChange={handleChange}
-                placeholder="Red carpet, ribbons, photo stops, etc."
-                className="form-input"
-              />
-            </FormGroup>
-
-            <button
-              type="submit"
-              className="w-full py-3 rounded-xl bg-purple-500 text-white font-bold hover:bg-purple-400 transition shadow-lg"
-            >
-              Confirm Booking
-            </button>
-          </motion.form>
-        )}
       </div>
     </section>
   );
 };
 
-// Reusable FormGroup
+// FormGroup component
 const FormGroup = ({ label, icon, children }) => (
   <div className="flex flex-col mb-3">
     <label className="block font-semibold text-gray-700 mb-1">

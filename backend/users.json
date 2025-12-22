@@ -20,5 +20,13 @@
     "phone": "tuku@gmail.com",
     "password": "Motale@18",
     "role": "user"
+  },
+  {
+    "id": 4,
+    "name": "Pharmacist",
+    "email": "mm@gmail.com",
+    "phone": "tuku@gmail.com",
+    "password": "Motale@18",
+    "role": "user"
   }
 ]
