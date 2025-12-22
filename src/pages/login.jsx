@@ -13,13 +13,17 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const res = await axios.post("http://localhost:5000/api/users/login", formData);
-      
+
       if (res.status === 200) {
+        // Assume backend returns user info: { name, email }
+        const { name, email } = res.data.user;
+
+        // Save to localStorage to use in Booking page
+        localStorage.setItem("user", JSON.stringify({ name, email }));
+
         alert("Login successful!");
-        // Redirect to Booking page
         navigate("/booking");
       }
     } catch (error) {
@@ -38,7 +42,6 @@ const Login = () => {
         <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          {/* Email */}
           <div>
             <label className="block mb-1 font-semibold">Email</label>
             <input
@@ -51,7 +54,6 @@ const Login = () => {
             />
           </div>
 
-          {/* Password */}
           <div>
             <label className="block mb-1 font-semibold">Password</label>
             <input
@@ -64,7 +66,6 @@ const Login = () => {
             />
           </div>
 
-          {/* Submit */}
           <button type="submit" className="luxury-button w-full mt-4">
             Login
           </button>
