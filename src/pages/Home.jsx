@@ -1,17 +1,20 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { FaCarSide, FaRing, FaUserTie, FaCheckCircle } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="relative overflow-hidden pt-32 pb-24 bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white">
-      
-      {/* Decorative Gradient Glow */}
-      <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-yellow-500/20 rounded-full blur-3xl"></div>
-      <div className="absolute top-40 -left-40 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-3xl"></div>
 
-      <div className="relative max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
-        
+      {/* Decorative Gradient Glow (NON-CLICK BLOCKING) */}
+      <div className="pointer-events-none absolute -top-40 -right-40 w-[500px] h-[500px] bg-yellow-500/20 rounded-full blur-3xl"></div>
+      <div className="pointer-events-none absolute top-40 -left-40 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-3xl"></div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+
         {/* LEFT CONTENT */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -24,24 +27,26 @@ const Home = () => {
           </h1>
 
           <p className="text-lg text-gray-300 max-w-xl mb-8">
-            Premium owner-driven chauffeur services designed for
-            <strong> Matric Dances</strong> and <strong>Weddings</strong>.
+            Premium owner-driven chauffeur services designed for{" "}
+            <strong>Matric Dances</strong> and <strong>Weddings</strong>.
             Arrive in elegance, comfort, and unmatched style.
           </p>
 
-          <div className="flex gap-4">
-            <a
-              href="/booking"
-              className="px-8 py-4 bg-yellow-400 text-black font-semibold rounded-xl hover:bg-yellow-300 transition"
+          {/* ✅ FIXED BUTTONS */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              onClick={() => navigate("/booking")}
+              className="w-full sm:w-auto px-8 py-4 bg-yellow-400 text-black font-semibold rounded-xl hover:bg-yellow-300 transition active:scale-95"
             >
               User
-            </a>
-            <a
-              href="/dashboard"
-              className="px-8 py-4 border border-gray-400 rounded-xl hover:bg-white hover:text-black transition"
+            </button>
+
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="w-full sm:w-auto px-8 py-4 border border-gray-400 rounded-xl hover:bg-white hover:text-black transition active:scale-95"
             >
-            Admin
-            </a>
+              Admin
+            </button>
           </div>
         </motion.div>
 
