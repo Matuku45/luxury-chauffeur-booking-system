@@ -31,14 +31,14 @@ const Booking = () => {
   /* 🚘 CARS */
   const cars = [
     {
-      name: "Mercedes S-Class",
+      name: "Family Car SUV",
       reg: "ABC123",
       seats: 4,
       pricePerDay: 2500,
       image: picture1,
     },
     {
-      name: "BMW 7 Series",
+      name: "Mercedes S-Class Family Car",
       reg: "XYZ789",
       seats: 4,
       pricePerDay: 2300,
