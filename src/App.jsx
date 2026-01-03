@@ -21,7 +21,7 @@ function App() {
 
         <main className="flex-grow pt-24">
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Booking/>} />
             <Route path="/matric-dances" element={<MatricDances />} />
             <Route path="/weddings" element={<Weddings />} />
             <Route path="/vehicles" element={<Vehicles />} />
