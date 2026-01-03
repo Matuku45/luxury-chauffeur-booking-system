@@ -49,11 +49,9 @@ const Header = () => {
       {menuOpen && (
         <div className="md:hidden bg-slate-900 px-6 py-6 space-y-4 text-center border-t border-slate-700">
           {[
-            { label: "Home", path: "/" },
+            { label: "Home", path: "/booking" },
             { label: "Matric Dances", path: "/matric-dances" },
             { label: "Weddings", path: "/weddings" },
-            { label: "Vehicles", path: "/dashboard" },
-            { label: "Booking", path: "/booking" },
             { label: "Contact", path: "/contact" },
             { label: "Login", path: "/login" },
             { label: "Sign Up", path: "/signup"},

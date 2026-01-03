@@ -9,7 +9,7 @@ import Weddings from "./pages/Weddings";
 import Vehicles from "./pages/Vehicles";
 import Booking from "./pages/Booking";
 import Contact from "./pages/Contact";
-import Login from "./pages/Login";
+
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/dashboard";
 
@@ -25,10 +25,10 @@ function App() {
             <Route path="/matric-dances" element={<MatricDances />} />
             <Route path="/weddings" element={<Weddings />} />
             <Route path="/vehicles" element={<Vehicles />} />
-            <Route path="/booking" element={<Booking />} />
+            <Route path="/booking" element={<Home />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+
+           
             <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </main>
