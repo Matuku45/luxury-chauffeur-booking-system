@@ -196,7 +196,7 @@ const Booking = () => {
               </Input>
 
               <button className="w-full py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition">
-                Confirm Booking
+                Confirm Bookings
               </button>
             </motion.form>
           </motion.div>
