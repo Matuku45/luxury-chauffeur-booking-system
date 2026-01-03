@@ -22,7 +22,7 @@ const Header = () => {
 
         {/* DESKTOP NAV */}
         <nav className="hidden md:flex space-x-8 text-slate-300 font-medium">
-          {["Home", "Matric Dances", "Weddings", "Vehicles", "Booking", "Contact"].map(
+          {["Matric Dances", "Weddings", "Vehicles", "About", "Contact"].map(
             (item) => (
               <Link
                 key={item}
@@ -49,12 +49,13 @@ const Header = () => {
       {menuOpen && (
         <div className="md:hidden bg-slate-900 px-6 py-6 space-y-4 text-center border-t border-slate-700">
           {[
-            { label: "Home", path: "/booking" },
             { label: "Matric Dances", path: "/matric-dances" },
             { label: "Weddings", path: "/weddings" },
+            { label: "Vehicles", path: "/vehicles" },
+            { label: "About", path: "/about" },
             { label: "Contact", path: "/contact" },
             { label: "Login", path: "/login" },
-            { label: "Sign Up", path: "/signup"},
+            { label: "Sign Up", path: "/signup" },
           ].map((link) => (
             <Link
               key={link.label}
