@@ -9,9 +9,9 @@ export default defineConfig({
 
     
   ],
-
-   build: {
-    outDir: 'build', // so Render can find the folder
+build: {
+    outDir: 'dist', // ✅ ensure Vite builds to 'dist' for Render
+    emptyOutDir: true, // cleans the folder before building
   },
 
 
