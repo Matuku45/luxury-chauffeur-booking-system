@@ -5,13 +5,21 @@ import {
   FaMoneyBillWave,
   FaLayerGroup,
   FaPlus,
-  FaTimes
+  FaTimes,
+  FaTrash,
+  FaEdit
 } from "react-icons/fa";
+
+/* ---------------- GLOBAL STORAGE KEY ---------------- */
+const STORAGE_KEY = "cars";
 
 const Dashboard = () => {
   const [cars, setCars] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
   const [newCar, setNewCar] = useState({
+    id: null,
     name: "",
     reg: "",
     seats: 4,
@@ -19,24 +27,24 @@ const Dashboard = () => {
     image: ""
   });
 
-  /* ---------------- LOAD FROM LOCAL STORAGE ---------------- */
+  /* ---------------- LOAD (GLOBAL) ---------------- */
   useEffect(() => {
-    const storedCars = JSON.parse(localStorage.getItem("cars")) || [];
+    const storedCars = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     setCars(storedCars);
   }, []);
 
-  /* ---------------- SAVE TO LOCAL STORAGE ---------------- */
+  /* ---------------- SAVE (GLOBAL) ---------------- */
   useEffect(() => {
-    localStorage.setItem("cars", JSON.stringify(cars));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cars));
   }, [cars]);
 
-  /* ---------------- HANDLE INPUT ---------------- */
+  /* ---------------- INPUT ---------------- */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNewCar(prev => ({ ...prev, [name]: value }));
   };
 
-  /* ---------------- HANDLE IMAGE UPLOAD ---------------- */
+  /* ---------------- IMAGE ---------------- */
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -48,20 +56,50 @@ const Dashboard = () => {
     reader.readAsDataURL(file);
   };
 
-  /* ---------------- ADD CAR ---------------- */
-  const handleAddCar = (e) => {
+  /* ---------------- CREATE / UPDATE ---------------- */
+  const handleSaveCar = (e) => {
     e.preventDefault();
 
-    const carToAdd = {
-      id: Date.now(),
-      ...newCar
-    };
+    if (isEditing) {
+      setCars(prev =>
+        prev.map(car => (car.id === newCar.id ? newCar : car))
+      );
+    } else {
+      setCars(prev => [
+        ...prev,
+        { ...newCar, id: Date.now() }
+      ]);
+    }
 
-    setCars(prev => [...prev, carToAdd]);
-    setShowModal(false);
-    setNewCar({ name: "", reg: "", seats: 4, price: "", image: "" });
+    resetForm();
   };
 
+  /* ---------------- DELETE ---------------- */
+  const handleDelete = (id) => {
+    setCars(prev => prev.filter(car => car.id !== id));
+  };
+
+  /* ---------------- EDIT ---------------- */
+  const handleEdit = (car) => {
+    setNewCar(car);
+    setIsEditing(true);
+    setShowModal(true);
+  };
+
+  const resetForm = () => {
+    setShowModal(false);
+    setIsEditing(false);
+    setNewCar({
+      id: null,
+      name: "",
+      reg: "",
+      seats: 4,
+      price: "",
+      image: ""
+    });
+  };
+
+  /* ---------------- STATS ---------------- */
   const totalCars = cars.length;
   const avgPrice =
     cars.length > 0
@@ -79,7 +117,9 @@ const Dashboard = () => {
           <h1 className="text-4xl font-extrabold text-gray-900">
             Admin Dashboard
           </h1>
-          <p className="text-gray-600">Luxury Chauffeur Fleet Management</p>
+          <p className="text-gray-600">
+            Luxury Chauffeur Fleet Management
+          </p>
         </div>
 
         <button
@@ -109,12 +149,14 @@ const Dashboard = () => {
               <th className="p-3 text-left">Seats</th>
               <th className="p-3 text-left">Price</th>
               <th className="p-3 text-left">Image</th>
+              <th className="p-3 text-left">Actions</th>
             </tr>
           </thead>
+
           <tbody>
             {cars.length === 0 ? (
               <tr>
-                <td colSpan="5" className="text-center py-10 text-gray-400">
+                <td colSpan="6" className="text-center py-10 text-gray-400">
                   No vehicles added yet
                 </td>
               </tr>
@@ -124,11 +166,31 @@ const Dashboard = () => {
                   <td className="p-3 font-semibold">{car.name}</td>
                   <td className="p-3">{car.reg}</td>
                   <td className="p-3">{car.seats}</td>
-                  <td className="p-3 font-semibold text-green-600">R{car.price}</td>
+                  <td className="p-3 font-semibold text-green-600">
+                    R{car.price}
+                  </td>
                   <td className="p-3">
                     {car.image && (
-                      <img src={car.image} className="w-24 h-14 rounded-xl object-cover shadow" />
+                      <img
+                        src={car.image}
+                        className="w-24 h-14 rounded-xl object-cover shadow"
+                        alt=""
+                      />
                     )}
+                  </td>
+                  <td className="p-3 flex gap-3">
+                    <button
+                      onClick={() => handleEdit(car)}
+                      className="text-indigo-600 hover:scale-110"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(car.id)}
+                      className="text-red-600 hover:scale-110"
+                    >
+                      <FaTrash />
+                    </button>
                   </td>
                 </tr>
               ))
@@ -137,7 +199,7 @@ const Dashboard = () => {
         </table>
       </div>
 
-      {/* ADD CAR MODAL */}
+      {/* MODAL */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -147,29 +209,31 @@ const Dashboard = () => {
             exit={{ opacity: 0 }}
           >
             <motion.form
-              onSubmit={handleAddCar}
+              onSubmit={handleSaveCar}
               className="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-lg"
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
             >
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">Add New Car</h3>
-                <FaTimes className="cursor-pointer" onClick={() => setShowModal(false)} />
+                <h3 className="text-xl font-bold">
+                  {isEditing ? "Edit Car" : "Add New Car"}
+                </h3>
+                <FaTimes className="cursor-pointer" onClick={resetForm} />
               </div>
 
-              <input className="input" placeholder="Car Name" name="name" onChange={handleChange} required />
-              <input className="input" placeholder="Registration" name="reg" onChange={handleChange} required />
-              <input className="input" type="number" placeholder="Seats" name="seats" onChange={handleChange} />
-              <input className="input" type="number" placeholder="Price per day" name="price" onChange={handleChange} required />
+              <input className="input" placeholder="Car Name" name="name" value={newCar.name} onChange={handleChange} required />
+              <input className="input" placeholder="Registration" name="reg" value={newCar.reg} onChange={handleChange} required />
+              <input className="input" type="number" placeholder="Seats" name="seats" value={newCar.seats} onChange={handleChange} />
+              <input className="input" type="number" placeholder="Price per day" name="price" value={newCar.price} onChange={handleChange} required />
 
               <input type="file" accept="image/*" onChange={handleImageUpload} />
 
               {newCar.image && (
-                <img src={newCar.image} className="mt-3 rounded-xl h-32 object-cover" />
+                <img src={newCar.image} className="mt-3 rounded-xl h-32 object-cover" alt="" />
               )}
 
               <button className="w-full mt-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl">
-                Save Car
+                {isEditing ? "Update Car" : "Save Car"}
               </button>
             </motion.form>
           </motion.div>
@@ -179,7 +243,7 @@ const Dashboard = () => {
   );
 };
 
-/* ---------- SMALL COMPONENT ---------- */
+/* ---------- STAT CARD ---------- */
 const StatCard = ({ icon, title, value }) => (
   <motion.div
     whileHover={{ scale: 1.05 }}
