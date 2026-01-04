@@ -14,5 +14,5 @@ export default defineConfig({
     outDir: 'build', // so Render can find the folder
   },
 
-  
+
 })
