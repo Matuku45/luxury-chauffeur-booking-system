@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaCalendarAlt,
@@ -28,8 +28,8 @@ const Booking = () => {
     clientPhone: "",
   });
 
-  /* 🚘 CARS */
-  const cars = [
+  /* 🚘 STATIC CARS (UNCHANGED) */
+  const staticCars = [
     {
       name: "Family Car SUV",
       reg: "ABC123",
@@ -66,6 +66,24 @@ const Booking = () => {
       image: uber2,
     },
   ];
+
+  /* ---------------- READ CARS FROM LOCAL STORAGE ---------------- */
+  const [localCars, setLocalCars] = useState([]);
+
+  useEffect(() => {
+    const storedCars = JSON.parse(localStorage.getItem("cars")) || [];
+    const mappedCars = storedCars.map((car) => ({
+      name: car.name,
+      reg: car.reg,
+      seats: car.seats,
+      pricePerDay: Number(car.price),
+      image: car.image,
+    }));
+    setLocalCars(mappedCars);
+  }, []);
+
+  /* ---------------- MERGE STATIC + LOCAL ---------------- */
+  const cars = [...staticCars, ...localCars];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
