@@ -10,7 +10,7 @@ export default defineConfig({
     
   ],
 build: {
-    outDir: 'dist', // ✅ ensure Vite builds to 'dist' for Render
+    outDir: 'build', // ✅ ensure Vite builds to 'dist' for Render
     emptyOutDir: true, // cleans the folder before building
   },
 
