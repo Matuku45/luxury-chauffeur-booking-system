@@ -12,11 +12,65 @@ import {
   FaMapMarkerAlt,
   FaPhone,
   FaSuitcase,
+  FaDownload,
 } from "react-icons/fa";
 
 /* ================= STORAGE KEYS ================= */
 const CAR_STORAGE_KEY = "cars";
 const BOOKINGS_KEY = "luxury_chauffeur_bookings";
+
+/* ================= DOWNLOAD FUNCTION ================= */
+const downloadBookings = (bookings) => {
+  if (bookings.length === 0) {
+    alert("No bookings available to download.");
+    return;
+  }
+
+  const headers = [
+    "Booking ID",
+    "Car Name",
+    "Pickup Date",
+    "Pickup Location",
+    "Final Location",
+    "Reason",
+    "Client Phone",
+    "Price Per Day",
+    "Created At",
+  ];
+
+  const rows = bookings.map((b) => [
+    b.id,
+    b.carName,
+    b.pickUpDate,
+    b.pickUpLocation,
+    b.finalLocation,
+    b.bookingReason,
+    b.clientPhone,
+    `R${b.pricePerDay}`,
+    new Date(b.createdAt).toLocaleString(),
+  ]);
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map((row) =>
+      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+    ),
+  ].join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute(
+    "download",
+    `Bookings_${new Date().toISOString().split("T")[0]}.csv`
+  );
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
 /* ================= DASHBOARD PAGE ================= */
 const Dashboard = () => {
@@ -115,12 +169,21 @@ const Dashboard = () => {
           <p className="text-gray-600">Fleet & Booking Management</p>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition"
-        >
-          <FaPlus /> Add Car
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition"
+          >
+            <FaPlus /> Add Car
+          </button>
+
+          <button
+            onClick={() => downloadBookings(bookings)}
+            className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition"
+          >
+            <FaDownload /> Download Bookings
+          </button>
+        </div>
       </div>
 
       {/* STATS */}
@@ -218,7 +281,7 @@ const FleetTable = ({ cars, onEdit, onDelete }) => (
   </table>
 );
 
-/* ---------- BOOKINGS TABLE (ALIGNED) ---------- */
+/* ---------- BOOKINGS TABLE ---------- */
 const BookingsTable = ({ bookings, onDelete }) => (
   <table className="w-full text-sm">
     <thead className="bg-pink-600 text-white">
@@ -236,14 +299,12 @@ const BookingsTable = ({ bookings, onDelete }) => (
       {bookings.map((b) => (
         <tr key={b.id} className="border-b hover:bg-pink-50">
           <td className="p-4 font-semibold">{b.carName}</td>
-
           <td className="p-4">
             <div className="flex items-center gap-2">
               <FaCalendarAlt />
               {b.pickUpDate}
             </div>
           </td>
-
           <td className="p-4">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2 text-green-600">
@@ -256,25 +317,21 @@ const BookingsTable = ({ bookings, onDelete }) => (
               </div>
             </div>
           </td>
-
           <td className="p-4">
             <div className="flex items-center gap-2">
               <FaSuitcase />
               {b.bookingReason}
             </div>
           </td>
-
           <td className="p-4">
             <div className="flex items-center gap-2">
               <FaPhone />
               {b.clientPhone}
             </div>
           </td>
-
           <td className="p-4 font-bold text-amber-600">
             R{Number(b.pricePerDay).toLocaleString()}
           </td>
-
           <td className="p-4 text-center">
             <FaTrash
               onClick={() => onDelete(b.id)}
