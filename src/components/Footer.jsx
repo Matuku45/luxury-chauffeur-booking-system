@@ -54,10 +54,7 @@ const Footer = () => {
           <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
 
           <ul className="space-y-3 text-sm">
-            <li className="flex items-center gap-3 hover:text-yellow-400 transition">
-              <FaCarSide className="text-yellow-400" />
-              <Link to="/">Home</Link>
-            </li>
+        
             <li className="flex items-center gap-3 hover:text-yellow-400 transition">
               <FaGraduationCap className="text-yellow-400" />
               <Link to="/matric-dances">Matric Dances</Link>
