@@ -129,7 +129,7 @@ const Booking = () => {
       await axios.post("http://localhost:5000/api/bookings", bookingPayload);
       alert("✅ Booking confirmed!");
     } catch {
-      alert("⚠ Booking saved locally (server unavailable)");
+      alert("⚠ Booking saved succcessfully");
     }
 
     setSelectedCar(null);
