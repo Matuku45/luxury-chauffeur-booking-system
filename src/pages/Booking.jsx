@@ -12,23 +12,42 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 
-/* 🔹 ASSET IMPORTS */
+/* ================= GLOBAL CONSTANTS ================= */
+
+export const BOOKING_REASONS = ["Matric", "Event", "Wedding", "Other"];
+export const BOOKINGS_KEY = "luxury_chauffeur_bookings";
+
+/* ================= ASSETS ================= */
+
 import pic from "../assets/pic.webp";
 import pic3 from "../assets/pic3.webp";
 import picture1 from "../assets/picture1.webp.jpg";
 import uber from "../assets/uber.webp";
 import uber2 from "../assets/uber2.webp";
 
+/* ================= HELPERS ================= */
+
+const saveBookingToLocalStorage = (booking) => {
+  const existing = JSON.parse(localStorage.getItem(BOOKINGS_KEY)) || [];
+  localStorage.setItem(BOOKINGS_KEY, JSON.stringify([...existing, booking]));
+};
+
+/* ================= COMPONENT ================= */
+
 const Booking = () => {
   const [selectedCar, setSelectedCar] = useState(null);
+  const [localCars, setLocalCars] = useState([]);
 
   const [formData, setFormData] = useState({
     pickUpDate: "",
     pickUpLocation: "",
+    finalLocation: "",
+    bookingReason: "",
     clientPhone: "",
   });
 
-  /* 🚘 STATIC CARS (UNCHANGED) */
+  /* ================= STATIC CARS ================= */
+
   const staticCars = [
     {
       name: "Family Car SUV",
@@ -67,8 +86,7 @@ const Booking = () => {
     },
   ];
 
-  /* ---------------- READ CARS FROM LOCAL STORAGE ---------------- */
-  const [localCars, setLocalCars] = useState([]);
+  /* ================= LOAD LOCAL CARS ================= */
 
   useEffect(() => {
     const storedCars = JSON.parse(localStorage.getItem("cars")) || [];
@@ -82,8 +100,9 @@ const Booking = () => {
     setLocalCars(mappedCars);
   }, []);
 
-  /* ---------------- MERGE STATIC + LOCAL ---------------- */
   const cars = [...staticCars, ...localCars];
+
+  /* ================= HANDLERS ================= */
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -94,42 +113,49 @@ const Booking = () => {
     e.preventDefault();
     if (!selectedCar) return;
 
+    const bookingPayload = {
+      id: crypto.randomUUID(),
+      ...formData,
+      carName: selectedCar.name,
+      carRegNumber: selectedCar.reg,
+      pricePerDay: selectedCar.pricePerDay,
+      createdAt: new Date().toISOString(),
+    };
+
+    // ✅ Save globally
+    saveBookingToLocalStorage(bookingPayload);
+
     try {
-      await axios.post("http://localhost:5000/api/bookings", {
-        ...formData,
-        carName: selectedCar.name,
-        carRegNumber: selectedCar.reg,
-        pricePerDay: selectedCar.pricePerDay,
-      });
+      await axios.post("http://localhost:5000/api/bookings", bookingPayload);
       alert("✅ Booking confirmed!");
-      setSelectedCar(null);
     } catch {
-      alert("❌ Booking failed");
+      alert("⚠ Booking saved locally (server unavailable)");
     }
+
+    setSelectedCar(null);
   };
+
+  /* ================= UI ================= */
 
   return (
     <section className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white">
 
-      {/* ================= TOP BAR ================= */}
+      {/* ===== HEADER ===== */}
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/5 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-extrabold tracking-wide">
-            🚘 Luxury Chauffeur
-          </h1>
+          <h1 className="text-2xl font-extrabold">🚘 Luxury Chauffeur</h1>
           <span className="text-sm text-gray-300 hidden sm:block">
             Premium Vehicles • Professional Service
           </span>
         </div>
       </header>
 
-      {/* ================= CONTENT ================= */}
+      {/* ===== CONTENT ===== */}
       <div className="px-6 py-12 max-w-7xl mx-auto">
         <h2 className="text-4xl font-extrabold mb-12 text-center">
           Select Your Luxury Ride
         </h2>
 
-        {/* ================= CAR GRID ================= */}
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
           {cars.map((car) => (
             <motion.div
@@ -137,16 +163,11 @@ const Booking = () => {
               whileHover={{ y: -8 }}
               className="rounded-3xl overflow-hidden bg-white/10 backdrop-blur-xl border border-white/10 shadow-xl"
             >
-              <img
-                src={car.image}
-                alt={car.name}
-                className="h-56 w-full object-cover"
-              />
+              <img src={car.image} alt={car.name} className="h-56 w-full object-cover" />
 
               <div className="p-6 space-y-4">
                 <h3 className="text-xl font-bold">{car.name}</h3>
 
-                {/* FEATURES */}
                 <div className="grid grid-cols-2 gap-3 text-sm text-gray-300">
                   <Feature icon={<FaUsers />} label={`${car.seats} Seats`} />
                   <Feature icon={<FaSnowflake />} label="Air-Conditioned" />
@@ -156,8 +177,7 @@ const Booking = () => {
 
                 <div className="flex justify-between items-center pt-4">
                   <p className="text-xl font-extrabold text-amber-400">
-                    R{car.pricePerDay.toLocaleString()}
-                    <span className="text-sm text-gray-300"> / day</span>
+                    R{car.pricePerDay.toLocaleString()} / day
                   </p>
 
                   <button
@@ -173,20 +193,20 @@ const Booking = () => {
         </div>
       </div>
 
-      {/* ================= BOOKING MODAL ================= */}
+      {/* ===== BOOKING MODAL ===== */}
       <AnimatePresence>
         {selectedCar && (
           <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
           >
             <motion.form
+              onSubmit={handleSubmit}
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
-              onSubmit={handleSubmit}
               className="bg-white text-black w-full max-w-lg rounded-3xl p-6 shadow-2xl relative space-y-4"
             >
               <button
@@ -197,7 +217,7 @@ const Booking = () => {
                 <FaTimes />
               </button>
 
-              <h2 className="text-2xl font-extrabold text-slate-800">
+              <h2 className="text-2xl font-extrabold">
                 Book {selectedCar.name}
               </h2>
 
@@ -209,12 +229,25 @@ const Booking = () => {
                 <input name="pickUpLocation" required onChange={handleChange} className="form-input w-full" />
               </Input>
 
+              <Input label="Final Location" icon={<FaMapMarkerAlt />}>
+                <input name="finalLocation" required onChange={handleChange} className="form-input w-full" />
+              </Input>
+
+              <Input label="Reason for Booking" icon={<FaSuitcase />}>
+                <select name="bookingReason" required onChange={handleChange} className="form-input w-full">
+                  <option value="">Select reason</option>
+                  {BOOKING_REASONS.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </Input>
+
               <Input label="Phone Number" icon={<FaPhone />}>
                 <input type="tel" name="clientPhone" required onChange={handleChange} className="form-input w-full" />
               </Input>
 
               <button className="w-full py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition">
-                Confirm Bookings
+                Confirm Booking
               </button>
             </motion.form>
           </motion.div>
