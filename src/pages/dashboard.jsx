@@ -21,21 +21,22 @@ const BOOKINGS_KEY = "luxury_chauffeur_bookings";
 
 /* ================= DOWNLOAD FUNCTION ================= */
 const downloadBookings = (bookings) => {
-  if (bookings.length === 0) {
+  if (!bookings || bookings.length === 0) {
     alert("No bookings available to download.");
     return;
   }
 
+  // Headers for Excel/Sheets
   const headers = [
     "Booking ID",
-    "Car Name",
-    "Pickup Date",
-    "Pickup Location",
-    "Final Location",
+    "Car",
+    "Date",
+    "Pickup",
+    "Drop-off",
     "Reason",
-    "Client Phone",
-    "Price Per Day",
-    "Created At",
+    "Phone",
+    "Price",
+    "Created",
   ];
 
   const rows = bookings.map((b) => [
@@ -66,7 +67,6 @@ const downloadBookings = (bookings) => {
     "download",
     `Bookings_${new Date().toISOString().split("T")[0]}.csv`
   );
-
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -237,7 +237,6 @@ const Card = ({ title, children }) => (
   </div>
 );
 
-/* ---------- FLEET TABLE ---------- */
 const FleetTable = ({ cars, onEdit, onDelete }) => (
   <table className="w-full text-sm">
     <thead className="bg-indigo-600 text-white">
@@ -281,7 +280,6 @@ const FleetTable = ({ cars, onEdit, onDelete }) => (
   </table>
 );
 
-/* ---------- BOOKINGS TABLE ---------- */
 const BookingsTable = ({ bookings, onDelete }) => (
   <table className="w-full text-sm">
     <thead className="bg-pink-600 text-white">
@@ -344,7 +342,6 @@ const BookingsTable = ({ bookings, onDelete }) => (
   </table>
 );
 
-/* ---------- MODAL ---------- */
 const Modal = ({ onClose, onSubmit, car, onChange, onImage, isEditing }) => (
   <motion.div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <motion.form
@@ -375,7 +372,6 @@ const Modal = ({ onClose, onSubmit, car, onChange, onImage, isEditing }) => (
   </motion.div>
 );
 
-/* ---------- STAT CARD ---------- */
 const StatCard = ({ icon, title, value }) => (
   <motion.div
     whileHover={{ scale: 1.05 }}
