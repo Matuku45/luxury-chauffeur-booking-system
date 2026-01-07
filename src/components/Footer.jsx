@@ -67,10 +67,7 @@ const Footer = () => {
               <FaCarSide className="text-yellow-400" />
               <Link to="/vehicles">Vehicles</Link>
             </li>
-            <li className="flex items-center gap-3 hover:text-yellow-400 transition">
-              <FaCarSide className="text-yellow-400" />
-              <Link to="/booking">Booking</Link>
-            </li>
+        
             <li className="flex items-center gap-3 hover:text-yellow-400 transition">
               <FaEnvelope className="text-yellow-400" />
               <Link to="/contact">Contact</Link>
