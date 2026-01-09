@@ -13,26 +13,27 @@ import {
   FaPhone,
   FaSuitcase,
   FaDownload,
+  FaIdCard,
+  FaUser,
 } from "react-icons/fa";
 
 /* ================= STORAGE KEYS ================= */
 const CAR_STORAGE_KEY = "cars";
 const BOOKINGS_KEY = "luxury_chauffeur_bookings";
 
-/* ================= DOWNLOAD FUNCTION ================= */
+/* ================= DOWNLOAD BOOKINGS ================= */
 const downloadBookings = (bookings) => {
-  if (!bookings || bookings.length === 0) {
-    alert("No bookings available to download.");
-    return;
-  }
+  if (!bookings.length) return alert("No bookings available.");
 
-  // Headers for Excel/Sheets
   const headers = [
     "Booking ID",
+    "First Name",
+    "Last Name",
     "Car",
-    "Date",
-    "Pickup",
-    "Drop-off",
+    "Car Reg",
+    "Pickup Date",
+    "Pickup Location",
+    "Final Location",
     "Reason",
     "Phone",
     "Price",
@@ -41,7 +42,10 @@ const downloadBookings = (bookings) => {
 
   const rows = bookings.map((b) => [
     b.id,
+    b.firstName,
+    b.lastName,
     b.carName,
+    b.carRegNumber,
     b.pickUpDate,
     b.pickUpLocation,
     b.finalLocation,
@@ -51,28 +55,21 @@ const downloadBookings = (bookings) => {
     new Date(b.createdAt).toLocaleString(),
   ]);
 
-  const csvContent = [
+  const csv = [
     headers.join(","),
-    ...rows.map((row) =>
-      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+    ...rows.map((r) =>
+      r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")
     ),
   ].join("\n");
 
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-
+  const blob = new Blob([csv], { type: "text/csv" });
   const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute(
-    "download",
-    `Bookings_${new Date().toISOString().split("T")[0]}.csv`
-  );
-  document.body.appendChild(link);
+  link.href = URL.createObjectURL(blob);
+  link.download = `Bookings_${new Date().toISOString().split("T")[0]}.csv`;
   link.click();
-  document.body.removeChild(link);
 };
 
-/* ================= DASHBOARD PAGE ================= */
+/* ================= DASHBOARD ================= */
 const Dashboard = () => {
   const [cars, setCars] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -88,29 +85,14 @@ const Dashboard = () => {
     image: "",
   });
 
-  /* ================= LOAD DATA ================= */
   useEffect(() => {
     setCars(JSON.parse(localStorage.getItem(CAR_STORAGE_KEY)) || []);
     setBookings(JSON.parse(localStorage.getItem(BOOKINGS_KEY)) || []);
   }, []);
 
-  /* ================= SAVE CARS ================= */
   useEffect(() => {
     localStorage.setItem(CAR_STORAGE_KEY, JSON.stringify(cars));
   }, [cars]);
-
-  /* ================= CAR LOGIC ================= */
-  const handleChange = (e) =>
-    setNewCar((p) => ({ ...p, [e.target.name]: e.target.value }));
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () =>
-      setNewCar((p) => ({ ...p, image: reader.result }));
-    reader.readAsDataURL(file);
-  };
 
   const saveCar = (e) => {
     e.preventDefault();
@@ -122,104 +104,128 @@ const Dashboard = () => {
     closeModal();
   };
 
-  const editCar = (car) => {
-    setNewCar(car);
-    setIsEditing(true);
-    setShowModal(true);
-  };
-
-  const deleteCar = (id) =>
-    setCars((p) => p.filter((c) => c.id !== id));
-
-  const deleteBooking = (id) => {
-    const updated = bookings.filter((b) => b.id !== id);
-    setBookings(updated);
-    localStorage.setItem(BOOKINGS_KEY, JSON.stringify(updated));
-  };
-
   const closeModal = () => {
     setShowModal(false);
     setIsEditing(false);
-    setNewCar({
-      id: null,
-      name: "",
-      reg: "",
-      seats: 4,
-      price: "",
-      image: "",
-    });
+    setNewCar({ id: null, name: "", reg: "", seats: 4, price: "", image: "" });
   };
 
   const avgPrice =
     cars.length > 0
-      ? Math.round(
-          cars.reduce((s, c) => s + Number(c.price || 0), 0) / cars.length
-        )
+      ? Math.round(cars.reduce((s, c) => s + Number(c.price || 0), 0) / cars.length)
       : 0;
 
-  /* ================= UI ================= */
   return (
-    <section className="min-h-screen p-8 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+    <section className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-10">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
         <div>
-          <h1 className="text-4xl font-extrabold text-gray-900">
+          <h1 className="text-3xl md:text-4xl font-extrabold">
             Admin Dashboard
           </h1>
           <p className="text-gray-600">Fleet & Booking Management</p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition"
+            className="btn-primary"
           >
             <FaPlus /> Add Car
           </button>
 
           <button
             onClick={() => downloadBookings(bookings)}
-            className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition"
+            className="btn-success"
           >
-            <FaDownload /> Download Bookings
+            <FaDownload /> Download bookings
           </button>
         </div>
       </div>
 
       {/* STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         <StatCard icon={<FaCar />} title="Vehicles" value={cars.length} />
-        <StatCard
-          icon={<FaMoneyBillWave />}
-          title="Avg Price / Day"
-          value={`R${avgPrice}`}
-        />
-        <StatCard
-          icon={<FaLayerGroup />}
-          title="Bookings"
-          value={bookings.length}
-        />
+        <StatCard icon={<FaMoneyBillWave />} title="Avg Price / Day" value={`R${avgPrice}`} />
+        <StatCard icon={<FaLayerGroup />} title="Bookings" value={bookings.length} />
       </div>
 
       {/* FLEET */}
-      <Card title="Fleet Overview">
-        <FleetTable cars={cars} onEdit={editCar} onDelete={deleteCar} />
-      </Card>
+      <Section title="Fleet Overview">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {cars.map((c) => (
+            <Card key={c.id}>
+              <img src={c.image} className="h-40 w-full rounded-xl object-cover mb-4" />
+
+              <Field label="Car Name" value={c.name} />
+              <Field label="Registration" value={c.reg} />
+              <Field label="Seats" value={c.seats} />
+              <Field label="Price / Day" value={`R${c.price}`} />
+
+              <div className="flex justify-end gap-4 mt-4">
+                <FaEdit
+                  className="text-indigo-600 cursor-pointer"
+                  onClick={() => {
+                    setNewCar(c);
+                    setIsEditing(true);
+                    setShowModal(true);
+                  }}
+                />
+                <FaTrash
+                  className="text-red-600 cursor-pointer"
+                  onClick={() =>
+                    setCars((p) => p.filter((x) => x.id !== c.id))
+                  }
+                />
+              </div>
+            </Card>
+          ))}
+        </div>
+      </Section>
 
       {/* BOOKINGS */}
-      <Card title="Bookings Overview">
-        <BookingsTable bookings={bookings} onDelete={deleteBooking} />
-      </Card>
+      <Section title="Bookings Overview">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {bookings.map((b) => (
+            <Card key={b.id}>
+              <Field label="Client Name" value={`${b.firstName} ${b.lastName}`} icon={<FaUser />} />
+              <Field label="Car" value={b.carName} icon={<FaCar />} />
+              <Field label="Car Registration" value={b.carRegNumber} icon={<FaIdCard />} />
+              <Field label="Pickup Date" value={b.pickUpDate} icon={<FaCalendarAlt />} />
+              <Field label="Pickup Location" value={b.pickUpLocation} icon={<FaMapMarkerAlt />} />
+              <Field label="Final Location" value={b.finalLocation} icon={<FaMapMarkerAlt />} />
+              <Field label="Reason" value={b.bookingReason} icon={<FaSuitcase />} />
+              <Field label="Phone" value={b.clientPhone} icon={<FaPhone />} />
+              <Field label="Price" value={`R${Number(b.pricePerDay).toLocaleString()}`} />
 
-      {/* MODAL */}
+              <div className="flex justify-end mt-4">
+                <FaTrash
+                  className="text-red-600 cursor-pointer"
+                  onClick={() =>
+                    setBookings((p) => p.filter((x) => x.id !== b.id))
+                  }
+                />
+              </div>
+            </Card>
+          ))}
+        </div>
+      </Section>
+
       <AnimatePresence>
         {showModal && (
           <Modal
             onClose={closeModal}
             onSubmit={saveCar}
             car={newCar}
-            onChange={handleChange}
-            onImage={handleImageUpload}
+            onChange={(e) =>
+              setNewCar((p) => ({ ...p, [e.target.name]: e.target.value }))
+            }
+            onImage={(e) => {
+              const f = e.target.files[0];
+              const r = new FileReader();
+              r.onload = () => setNewCar((p) => ({ ...p, image: r.result }));
+              r.readAsDataURL(f);
+            }}
             isEditing={isEditing}
           />
         )}
@@ -228,132 +234,40 @@ const Dashboard = () => {
   );
 };
 
-/* ================= COMPONENTS ================= */
+/* ================= SMALL COMPONENTS ================= */
 
-const Card = ({ title, children }) => (
-  <div className="bg-white rounded-3xl shadow-2xl p-6 mb-12">
+const Section = ({ title, children }) => (
+  <div className="bg-white rounded-3xl shadow-xl p-6 mb-12">
     <h2 className="text-2xl font-bold mb-6">{title}</h2>
     {children}
   </div>
 );
 
-const FleetTable = ({ cars, onEdit, onDelete }) => (
-  <table className="w-full text-sm">
-    <thead className="bg-indigo-600 text-white">
-      <tr>
-        <th className="p-4 text-left">Car</th>
-        <th className="p-4 text-left">Reg</th>
-        <th className="p-4 text-left">Seats</th>
-        <th className="p-4 text-left">Price</th>
-        <th className="p-4 text-left">Image</th>
-        <th className="p-4 text-center">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {cars.map((c) => (
-        <tr key={c.id} className="border-b hover:bg-indigo-50">
-          <td className="p-4 font-semibold">{c.name}</td>
-          <td className="p-4">{c.reg}</td>
-          <td className="p-4">{c.seats}</td>
-          <td className="p-4 font-bold text-green-600">R{c.price}</td>
-          <td className="p-4">
-            {c.image && (
-              <img
-                src={c.image}
-                className="w-24 h-14 rounded-xl object-cover"
-              />
-            )}
-          </td>
-          <td className="p-4 flex justify-center gap-4">
-            <FaEdit
-              onClick={() => onEdit(c)}
-              className="cursor-pointer text-indigo-600"
-            />
-            <FaTrash
-              onClick={() => onDelete(c.id)}
-              className="cursor-pointer text-red-600"
-            />
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
+const Card = ({ children }) => (
+  <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl shadow-lg p-5 space-y-2">
+    {children}
+  </div>
 );
 
-const BookingsTable = ({ bookings, onDelete }) => (
-  <table className="w-full text-sm">
-    <thead className="bg-pink-600 text-white">
-      <tr>
-        <th className="p-4 text-left">Car</th>
-        <th className="p-4 text-left">Date</th>
-        <th className="p-4 text-left">Route</th>
-        <th className="p-4 text-left">Reason</th>
-        <th className="p-4 text-left">Phone</th>
-        <th className="p-4 text-left">Price</th>
-        <th className="p-4 text-center">Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {bookings.map((b) => (
-        <tr key={b.id} className="border-b hover:bg-pink-50">
-          <td className="p-4 font-semibold">{b.carName}</td>
-          <td className="p-4">
-            <div className="flex items-center gap-2">
-              <FaCalendarAlt />
-              {b.pickUpDate}
-            </div>
-          </td>
-          <td className="p-4">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2 text-green-600">
-                <FaMapMarkerAlt />
-                {b.pickUpLocation}
-              </div>
-              <div className="flex items-center gap-2 text-red-600">
-                <FaMapMarkerAlt />
-                {b.finalLocation}
-              </div>
-            </div>
-          </td>
-          <td className="p-4">
-            <div className="flex items-center gap-2">
-              <FaSuitcase />
-              {b.bookingReason}
-            </div>
-          </td>
-          <td className="p-4">
-            <div className="flex items-center gap-2">
-              <FaPhone />
-              {b.clientPhone}
-            </div>
-          </td>
-          <td className="p-4 font-bold text-amber-600">
-            R{Number(b.pricePerDay).toLocaleString()}
-          </td>
-          <td className="p-4 text-center">
-            <FaTrash
-              onClick={() => onDelete(b.id)}
-              className="inline cursor-pointer text-red-600 hover:scale-110"
-            />
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
+const Field = ({ label, value, icon }) => (
+  <div className="flex flex-col">
+    <span className="text-xs uppercase text-gray-500 flex items-center gap-2">
+      {icon} {label}
+    </span>
+    <span className="font-semibold text-gray-800">{value}</span>
+  </div>
 );
 
 const Modal = ({ onClose, onSubmit, car, onChange, onImage, isEditing }) => (
   <motion.div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <motion.form
       onSubmit={onSubmit}
-      className="bg-white p-6 rounded-3xl w-full max-w-lg"
+      className="bg-white p-6 rounded-3xl w-full max-w-md"
       initial={{ scale: 0.9 }}
       animate={{ scale: 1 }}
     >
       <div className="flex justify-between mb-4">
-        <h3 className="text-xl font-bold">
-          {isEditing ? "Edit Car" : "Add Car"}
-        </h3>
+        <h3 className="font-bold">{isEditing ? "Edit Car" : "Add Car"}</h3>
         <FaTimes onClick={onClose} className="cursor-pointer" />
       </div>
 
@@ -363,9 +277,9 @@ const Modal = ({ onClose, onSubmit, car, onChange, onImage, isEditing }) => (
       <input className="input" type="number" name="price" value={car.price} onChange={onChange} placeholder="Price" />
       <input type="file" onChange={onImage} />
 
-      {car.image && <img src={car.image} className="mt-3 rounded-xl h-32 object-cover" />}
+      {car.image && <img src={car.image} className="mt-3 h-32 rounded-xl object-cover" />}
 
-      <button className="w-full mt-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl">
+      <button className="btn-primary w-full mt-4">
         {isEditing ? "Update Car" : "Save Car"}
       </button>
     </motion.form>
@@ -373,14 +287,11 @@ const Modal = ({ onClose, onSubmit, car, onChange, onImage, isEditing }) => (
 );
 
 const StatCard = ({ icon, title, value }) => (
-  <motion.div
-    whileHover={{ scale: 1.05 }}
-    className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-3xl shadow-xl"
-  >
+  <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-3xl shadow-xl">
     <div className="text-2xl">{icon}</div>
-    <p className="mt-3 text-sm uppercase opacity-80">{title}</p>
+    <p className="text-sm opacity-80 mt-2">{title}</p>
     <p className="text-3xl font-bold">{value}</p>
-  </motion.div>
+  </div>
 );
 
 export default Dashboard;
