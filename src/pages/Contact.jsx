@@ -62,7 +62,7 @@ const Contact = () => {
         >
           {/* WHATSAPP */}
           <a
-            href="https://wa.me/27123456789"
+            href="https://wa.me/0813186838"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-4 p-6 rounded-2xl bg-green-500 hover:bg-green-400 transition shadow-xl"
@@ -70,7 +70,7 @@ const Contact = () => {
             <FaWhatsapp className="text-3xl" />
             <div>
               <p className="font-bold">WhatsApp</p>
-              <p className="text-sm">+27 12 345 6789</p>
+              <p className="text-sm">0813186838</p>
             </div>
           </a>
 
@@ -82,7 +82,7 @@ const Contact = () => {
             <FaPhoneAlt className="text-2xl" />
             <div>
               <p className="font-bold">Office Call</p>
-              <p className="text-sm">+27 11 122 2333</p>
+              <p className="text-sm">0813186838</p>
             </div>
           </a>
 
