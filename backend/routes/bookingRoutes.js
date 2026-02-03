@@ -1,105 +1,140 @@
 const express = require("express");
 const router = express.Router();
+const mysql = require("mysql2/promise"); // Make sure mysql2 is installed
 
-// ------------------- Dummy Bookings Data -------------------
-let bookings = [
-  {
-    id: 1,
-    clientName: "John Doe",
-    clientEmail: "john@example.com",
-    clientPhone: "1234567890",
-    carName: "Mercedes S-Class",
-    carRegNumber: "ABC123XYZ",
-    price: 500,
-    purpose: "Wedding",
-    pickUpDate: "2025-12-25",
-    pickUpTime: "10:00",
-    duration: "4 hours",
-    passengers: 4,
-    pickUpLocation: "Johannesburg",
-    destination: "Pretoria",
-    specialRequests: "Red carpet, ribbons",
-    status: "Pending",
-    confirmed: false,
-  },
-  {
-    id: 2,
-    clientName: "Jane Smith",
-    clientEmail: "jane@example.com",
-    clientPhone: "0987654321",
-    carName: "BMW 7 Series",
-    carRegNumber: "XYZ987ABC",
-    price: 450,
-    purpose: "Corporate Event",
-    pickUpDate: "2025-12-28",
-    pickUpTime: "14:00",
-    duration: "2 hours",
-    passengers: 2,
-    pickUpLocation: "Sandton",
-    destination: "Midrand",
-    specialRequests: "Water bottles and snacks",
-    status: "Pending",
-    confirmed: false,
-  },
-];
+// ------------------- MySQL Connection -------------------
+const dbConfig = {
+  host: "localhost",           // If Node.js runs on Afrihost, use "localhost"
+  user: "matrici3g0q5_Kgabo", // Your DB username
+  password: "YourPasswordHere",// Your DB password
+  database: "matrici3g0q5_My-Shutle",
+  port: 3306
+};
+
+// Helper function to get a connection
+async function getConnection() {
+  const connection = await mysql.createConnection(dbConfig);
+  return connection;
+}
 
 // ------------------- ROUTES -------------------
 
 // GET all bookings
-router.get("/", (req, res) => {
-  res.json(bookings);
+router.get("/", async (req, res) => {
+  try {
+    const conn = await getConnection();
+    const [rows] = await conn.query("SELECT * FROM bookings");
+    await conn.end();
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // GET single booking by ID
-router.get("/:id", (req, res) => {
-  const { id } = req.params;
-  const booking = bookings.find(b => b.id == id);
-  if (!booking) return res.status(404).json({ message: "Booking not found" });
-  res.json(booking);
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const conn = await getConnection();
+    const [rows] = await conn.query("SELECT * FROM bookings WHERE id = ?", [id]);
+    await conn.end();
+
+    if (rows.length === 0) return res.status(404).json({ message: "Booking not found" });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // CREATE a new booking
-router.post("/", (req, res) => {
-  const newBooking = {
-    id: bookings.length + 1,
-    ...req.body,
-    status: "Pending",
-    confirmed: false,
-  };
-  bookings.push(newBooking);
-  res.status(201).json({ message: "Booking submitted", booking: newBooking });
+router.post("/", async (req, res) => {
+  try {
+    const {
+      client_first_name,
+      client_last_name,
+      car_type,
+      car_registration,
+      pickup_date,
+      pickup_location,
+      final_location,
+      reason,
+      phone,
+      price
+    } = req.body;
+
+    const conn = await getConnection();
+    const [result] = await conn.query(
+      `INSERT INTO bookings 
+      (client_first_name, client_last_name, car_type, car_registration, pickup_date, pickup_location, final_location, reason, phone, price)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [client_first_name, client_last_name, car_type, car_registration, pickup_date, pickup_location, final_location, reason, phone, price]
+    );
+    await conn.end();
+
+    res.status(201).json({ message: "Booking submitted", bookingId: result.insertId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // APPROVE booking
-router.patch("/:id/approve", (req, res) => {
-  const { id } = req.params;
-  const booking = bookings.find(b => b.id == id);
-  if (!booking) return res.status(404).json({ message: "Booking not found" });
+router.patch("/:id/approve", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const conn = await getConnection();
+    const [result] = await conn.query(
+      "UPDATE bookings SET status = 'Confirmed' WHERE id = ?",
+      [id]
+    );
+    await conn.end();
 
-  booking.status = "Confirmed";
-  booking.confirmed = true;
-  res.json({ message: `Booking ${id} approved`, booking, redirectToPayment: true });
+    if (result.affectedRows === 0) return res.status(404).json({ message: "Booking not found" });
+    res.json({ message: `Booking ${id} approved`, redirectToPayment: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // DECLINE booking
-router.patch("/:id/decline", (req, res) => {
-  const { id } = req.params;
-  const booking = bookings.find(b => b.id == id);
-  if (!booking) return res.status(404).json({ message: "Booking not found" });
+router.patch("/:id/decline", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const conn = await getConnection();
+    const [result] = await conn.query(
+      "UPDATE bookings SET status = 'Declined' WHERE id = ?",
+      [id]
+    );
+    await conn.end();
 
-  booking.status = "Declined";
-  booking.confirmed = false;
-  res.json({ message: `Booking ${id} declined`, booking });
+    if (result.affectedRows === 0) return res.status(404).json({ message: "Booking not found" });
+    res.json({ message: `Booking ${id} declined` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // PAYMENT CONFIRMATION
-router.patch("/:id/payment-confirmation", (req, res) => {
-  const { id } = req.params;
-  const booking = bookings.find(b => b.id == id);
-  if (!booking) return res.status(404).json({ message: "Booking not found" });
+router.patch("/:id/payment-confirmation", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const conn = await getConnection();
+    const [result] = await conn.query(
+      "UPDATE bookings SET status = 'Paid' WHERE id = ?",
+      [id]
+    );
+    await conn.end();
 
-  booking.status = "Paid";
-  res.json({ message: `Booking ${id} payment confirmed`, booking });
+    if (result.affectedRows === 0) return res.status(404).json({ message: "Booking not found" });
+    res.json({ message: `Booking ${id} payment confirmed` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 module.exports = router;
