@@ -50,9 +50,9 @@ const Booking = () => {
   const staticCars = [
     { name: "Family Car SUV", reg: "ABC123", seats: 4, pricePerDay: 2500, image: picture1 },
     { name: "Mercedes S-Class Family Car", reg: "XYZ789", seats: 4, pricePerDay: 2300, image: pic },
-    { name: "Audi A8", reg: "DEF456", seats: 4, pricePerDay: 2200, image: pic3 },
-    { name: "Executive Uber Black", reg: "UBR001", seats: 4, pricePerDay: 1800, image: uber },
-    { name: "Luxury Uber XL", reg: "UBR002", seats: 6, pricePerDay: 2000, image: uber2 },
+    { name: "Avanza", reg: "DEF456", seats: 4, pricePerDay: 2200, image: pic3 },
+    { name: "Polo", reg: "UBR001", seats: 4, pricePerDay: 1800, image: uber },
+    { name: "Luxury Uber Black", reg: "UBR002", seats: 6, pricePerDay: 2000, image: uber2 },
   ];
 
   /* ================= LOAD LOCAL CARS ================= */
@@ -299,7 +299,7 @@ const Booking = () => {
   );
 };
 
-/* ================= SMALL COMPONENTS ================= */
+/* ================= SMALL COMPONENTS ============= */
 const Feature = ({ icon, label }) => (
   <div className="flex items-center gap-2 text-xs sm:text-sm">
     <span className="text-amber-400">{icon}</span>
