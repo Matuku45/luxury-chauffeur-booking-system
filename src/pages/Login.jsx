@@ -6,54 +6,48 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
 
-  // Dummy credentials for front-end simulation
-  const dummyAdmin = {
-    name: "Admin User",
-    email: "admin@example.com",
-    password: "admin123",
-    role: "admin",
-  };
+  // ADMIN + USER credentials from .env
+  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+  const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
 
-  const dummyUser = {
-    name: "Regular u User",
-    email: "user@example.com",
-    password: "user123",
-    role: "user",
-  };
+  const userEmail = import.meta.env.VITE_USER_EMAIL;
+  const userPassword = import.meta.env.VITE_USER_PASSWORD;
+
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Check if credentials match dummy admin/user
     let user = null;
-    if (formData.email === dummyAdmin.email && formData.password === dummyAdmin.password) {
-      user = dummyAdmin;
-    } else if (formData.email === dummyUser.email && formData.password === dummyUser.password) {
-      user = dummyUser;
+
+    // Check admin
+    if (formData.email === adminEmail && formData.password === adminPassword) {
+      user = { email: adminEmail, password: adminPassword, role: "admin" };
+    }
+    // Check normal user
+    else if (formData.email === userEmail && formData.password === userPassword) {
+      user = { email: userEmail, password: userPassword, role: "user" };
     }
 
     if (!user) {
       return alert("Invalid credentials!");
     }
 
-    // Send to backend
     try {
-      const res = await axios.post("http://localhost:5000/api/users/login", {
+      const res = await axios.post(`${API_URL}/api/users/login`, {
         email: user.email,
-        password: user.password
+        password: user.password,
       });
 
-      // Save user info
       localStorage.setItem("user", JSON.stringify(res.data.user));
       alert(`Login successful! Welcome ${res.data.user.name}`);
 
-      // Redirect based on role
-      if (res.data.user.role === "admin") {
+      if (user.role === "admin") {
         navigate("/dashboard");
       } else {
         navigate("/booking");
