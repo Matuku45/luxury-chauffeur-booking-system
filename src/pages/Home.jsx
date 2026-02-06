@@ -42,7 +42,7 @@ const Home = () => {
             </button>
 
             <button
-              onClick={() => navigate("/dashboard")}
+             
               className="w-full sm:w-auto px-8 py-4 border border-gray-400 rounded-xl hover:bg-white hover:text-black transition active:scale-95"
             >
               Admin

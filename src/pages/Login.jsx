@@ -1,59 +1,61 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
 
-  // ADMIN + USER credentials from .env
+  // ADMIN credentials from .env
   const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
   const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
 
+  // USER credentials from .env
   const userEmail = import.meta.env.VITE_USER_EMAIL;
   const userPassword = import.meta.env.VITE_USER_PASSWORD;
-
-  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    let user = null;
+    let loggedUser = null;
 
-    // Check admin
+    // Admin login
     if (formData.email === adminEmail && formData.password === adminPassword) {
-      user = { email: adminEmail, password: adminPassword, role: "admin" };
+      loggedUser = {
+        name: "Admin",
+        email: adminEmail,
+        role: "admin",
+      };
     }
-    // Check normal user
+
+    // User login
     else if (formData.email === userEmail && formData.password === userPassword) {
-      user = { email: userEmail, password: userPassword, role: "user" };
+      loggedUser = {
+        name: "User",
+        email: userEmail,
+        role: "user",
+      };
     }
 
-    if (!user) {
-      return alert("Invalid credentials!");
+    // Invalid login
+    if (!loggedUser) {
+      return alert("Invalid email or password!");
     }
 
-    try {
-      const res = await axios.post(`${API_URL}/api/users/login`, {
-        email: user.email,
-        password: user.password,
-      });
+    // Save user to localStorage
+    localStorage.setItem("user", JSON.stringify(loggedUser));
 
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      alert(`Login successful! Welcome ${res.data.user.name}`);
+    alert(`Login successful! Welcome ${loggedUser.name}`);
 
-      if (user.role === "admin") {
-        navigate("/dashboard");
-      } else {
-        navigate("/booking");
-      }
-    } catch (error) {
-      alert("Something went wrong. Backend might not be running.");
+    // Redirect based on role
+    if (loggedUser.role === "admin") {
+      navigate("/dashboard");
+    } else {
+      navigate("/booking");
     }
   };
 
