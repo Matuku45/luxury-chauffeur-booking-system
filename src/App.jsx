@@ -12,6 +12,8 @@ import Contact from "./pages/Contact";
 
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/dashboard";
+import Login from "./pages/Login";
+
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
             <Route path="/home" element={<Home />} />    
             <Route path="/about" element={<Home />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<Login />} />
           </Routes>
         </main>
 

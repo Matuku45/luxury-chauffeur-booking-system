@@ -4,12 +4,13 @@ const mysql = require("mysql2/promise"); // Make sure mysql2 is installed
 
 // ------------------- MySQL Connection -------------------
 const dbConfig = {
-  host: "localhost",           // If Node.js runs on Afrihost, use "localhost"
-  user: "matrici3g0q5_Kgabo", // Your DB username
-  password: "YourPasswordHere",// Your DB password
+  host: "db1234.afrihost.co.za",   // your Afrihost remote MySQL host
+  user: "matrici3g0q5_Kgabo",
+  password: "YourActualPassword",   // make sure it’s correct
   database: "matrici3g0q5_My-Shutle",
   port: 3306
 };
+
 
 // Helper function to get a connection
 async function getConnection() {

@@ -20,21 +20,36 @@ const Header = () => {
           </span>
         </Link>
 
-        {/* DESKTOP NAV */}
-        <nav className="hidden md:flex space-x-8 text-slate-300 font-medium">
-          {["Matric Dances", "Weddings", "Vehicles", "About", "Contact"].map(
-            (item) => (
-              <Link
-                key={item}
-                to={`/${item.toLowerCase().replace(" ", "-")}`}
-                className="relative group hover:text-yellow-400 transition"
-              >
-                {item}
-                <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-yellow-400 transition-all group-hover:w-full"></span>
-              </Link>
-            )
-          )}
-        </nav>
+{/* DESKTOP NAV */}
+<nav className="hidden md:flex space-x-8 text-slate-300 font-medium items-center">
+  {["Matric Dances", "Weddings", "Vehicles", "About", "Contact"].map((item) => (
+    <Link
+      key={item}
+      to={`/${item.toLowerCase().replace(" ", "-")}`}
+      className="relative group hover:text-yellow-400 transition"
+    >
+      {item}
+      <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-yellow-400 transition-all group-hover:w-full"></span>
+    </Link>
+  ))}
+
+  {/* LOGIN */}
+  <Link
+    to="/login"
+    className="relative group hover:text-yellow-400 transition"
+  >
+    Login
+    <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-yellow-400 transition-all group-hover:w-full"></span>
+  </Link>
+
+  {/* SIGNUP BUTTON */}
+  <Link
+    to="/signup"
+    className="bg-yellow-400 text-slate-900 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-500 transition"
+  >
+    Sign Up
+  </Link>
+</nav>
 
         {/* MOBILE BUTTON */}
         <button
