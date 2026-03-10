@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -10,9 +9,10 @@ const Signup = () => {
     password: "",
     confirmPassword: "",
   });
-
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const FIREBASE_URL = import.meta.env.VITE_DATABASE_URL || "https://roomap-aa517-default-rtdb.firebaseio.com/";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,35 +30,85 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/users/signup", {
+      // Fetch existing users
+      const res = await fetch(`${FIREBASE_URL}users.json`);
+      const users = await res.json() || {};
+
+      // Check for duplicate email
+      if (Object.values(users).some(u => u.email === formData.email)) {
+        alert("Email already registered!");
+        setLoading(false);
+        return;
+      }
+
+      // Save new user
+      const newUser = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        password: formData.password,
+        password: formData.password, // NOTE: hash in production
+        role: "user",
+        createdAt: new Date().toISOString(),
+      };
+
+      await fetch(`${FIREBASE_URL}users.json`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUser),
       });
 
-      alert(res.data.message);
+      alert("✅ Signup successful!");
       navigate("/login");
+
     } catch (err) {
-      if (err.response) {
-        alert(err.response.data.message);
-      } else {
-        alert("Something went wrong. Please try again.");
-      }
+      console.error(err);
+      alert("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Seed admin if not exists
+  useEffect(() => {
+    const seedAdmin = async () => {
+      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+      const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+
+      if (!adminEmail || !adminPassword) return;
+
+      try {
+        const res = await fetch(`${FIREBASE_URL}users.json`);
+        const users = await res.json() || {};
+
+        if (!Object.values(users).some(u => u.email === adminEmail)) {
+          await fetch(`${FIREBASE_URL}users.json`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: "Admin",
+              email: adminEmail,
+              phone: "0000000000",
+              password: adminPassword,
+              role: "admin",
+              createdAt: new Date().toISOString(),
+            }),
+          });
+          console.log("✅ Admin seeded");
+        }
+      } catch (err) {
+        console.error("Failed to seed admin:", err);
+      }
+    };
+
+    seedAdmin();
+  }, []);
+
   return (
     <section className="flex justify-center items-center min-h-screen bg-slate-900 px-6">
       <div className="bg-slate-800 shadow-lg rounded-xl p-8 w-full max-w-md text-white">
-        <h1 className="text-3xl font-bold mb-6 text-center text-yellow-400">
-          Sign Up
-        </h1>
+        <h1 className="text-3xl font-bold mb-6 text-center text-yellow-400">Sign Up</h1>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          {/* Name */}
           <div>
             <label className="block mb-1 font-semibold">Full Name</label>
             <input
@@ -71,7 +121,6 @@ const Signup = () => {
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block mb-1 font-semibold">Email</label>
             <input
@@ -84,7 +133,6 @@ const Signup = () => {
             />
           </div>
 
-          {/* Phone */}
           <div>
             <label className="block mb-1 font-semibold">Phone Number</label>
             <input
@@ -97,7 +145,6 @@ const Signup = () => {
             />
           </div>
 
-          {/* Password */}
           <div>
             <label className="block mb-1 font-semibold">Password</label>
             <input
@@ -110,7 +157,6 @@ const Signup = () => {
             />
           </div>
 
-          {/* Confirm Password */}
           <div>
             <label className="block mb-1 font-semibold">Confirm Password</label>
             <input
@@ -123,7 +169,6 @@ const Signup = () => {
             />
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             className="luxury-button w-full mt-4 bg-yellow-400 text-slate-900 font-bold hover:bg-yellow-300 transition"

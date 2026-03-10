@@ -6,7 +6,7 @@ const mysql = require("mysql2/promise"); // Make sure mysql2 is installed
 const dbConfig = {
   host: "db1234.afrihost.co.za",   // your Afrihost remote MySQL host
   user: "matrici3g0q5_Kgabo",
-  password: "YourActualPassword",   // make sure it’s correct
+  password: "Motale@18",   // make sure it’s correct
   database: "matrici3g0q5_My-Shutle",
   port: 3306
 };

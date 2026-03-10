@@ -3,59 +3,74 @@ import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // ADMIN credentials from .env
+  const FIREBASE_URL = import.meta.env.VITE_DATABASE_URL || "https://roomap-aa517-default-rtdb.firebaseio.com/";
+
+  // ENV defaults
   const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
   const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
-
-  // USER credentials from .env
   const userEmail = import.meta.env.VITE_USER_EMAIL;
   const userPassword = import.meta.env.VITE_USER_PASSWORD;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    let loggedUser = null;
+    try {
+      let loggedUser = null;
 
-    // Admin login
-    if (formData.email === adminEmail && formData.password === adminPassword) {
-      loggedUser = {
-        name: "Admin",
-        email: adminEmail,
-        role: "admin",
-      };
-    }
+      // Admin login via .env
+      if (formData.email === adminEmail && formData.password === adminPassword) {
+        loggedUser = { name: "Admin", email: adminEmail, role: "admin" };
+      }
+      // Default user login via .env
+      else if (formData.email === userEmail && formData.password === userPassword) {
+        loggedUser = { name: "User", email: userEmail, role: "user" };
+      }
+      // Check Firebase users
+      else {
+        const res = await fetch(`${FIREBASE_URL}users.json`);
+        const users = await res.json() || {};
 
-    // User login
-    else if (formData.email === userEmail && formData.password === userPassword) {
-      loggedUser = {
-        name: "User",
-        email: userEmail,
-        role: "user",
-      };
-    }
+        const matchedUser = Object.values(users).find(
+          u => u.email === formData.email && u.password === formData.password
+        );
 
-    // Invalid login
-    if (!loggedUser) {
-      return alert("Invalid email or password!");
-    }
+        if (matchedUser) {
+          loggedUser = {
+            name: matchedUser.name,
+            email: matchedUser.email,
+            role: matchedUser.role || "user"
+          };
+        }
+      }
 
-    // Save user to localStorage
-    localStorage.setItem("user", JSON.stringify(loggedUser));
+      if (!loggedUser) {
+        alert("❌ Invalid email or password!");
+        setLoading(false);
+        return;
+      }
 
-    alert(`Login successful! Welcome ${loggedUser.name}`);
+      // Save to localStorage
+      localStorage.setItem("user", JSON.stringify(loggedUser));
+      alert(`✅ Login successful! Welcome ${loggedUser.name}`);
 
-    // Redirect based on role
-    if (loggedUser.role === "admin") {
-      navigate("/dashboard");
-    } else {
-      navigate("/booking");
+      // Redirect based on role
+      if (loggedUser.role === "admin") navigate("/dashboard");
+      else navigate("/booking");
+
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -89,8 +104,12 @@ const Login = () => {
             />
           </div>
 
-          <button type="submit" className="luxury-button w-full mt-4">
-            Login
+          <button
+            type="submit"
+            className="luxury-button w-full mt-4"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
       </div>
