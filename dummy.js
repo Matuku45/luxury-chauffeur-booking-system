@@ -5,8 +5,6 @@ import fs from "fs";
 
 // ------------------------------
 // DATABASE URL
-// ------------------------------
-const DATABASE_URL = "https://roomap-aa517-default-rtdb.firebaseio.com";
 
 // ------------------------------
 // IMAGE PATH

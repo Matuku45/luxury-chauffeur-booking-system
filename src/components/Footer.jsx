@@ -36,15 +36,15 @@ const Footer = () => {
           <ul className="space-y-3 text-sm">
             <li className="flex items-center gap-3">
               <FaEnvelope className="text-yellow-400" />
-              info@luxurychauffeur.com
+              INFO@MATRICRIDE.CO.ZA
             </li>
             <li className="flex items-center gap-3">
               <FaPhoneAlt className="text-yellow-400" />
-              +27 123 456 789
+              0813186838
             </li>
             <li className="flex items-center gap-3">
               <FaMapMarkerAlt className="text-yellow-400" />
-              Johannesburg, South Africa
+              PRETORIA GAUTENG 
             </li>
           </ul>
         </div>

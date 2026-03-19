@@ -101,18 +101,8 @@ const MatricDances = () => {
             </ul>
 
             <div className="mt-10 flex gap-4">
-              <a
-                href="/book"
-                className="px-10 py-4 bg-yellow-400 text-black font-semibold rounded-2xl hover:bg-yellow-300 transition shadow-lg"
-              >
-                Secure Your Date
-              </a>
-              <a
-                href="/packages"
-                className="px-10 py-4 border border-gray-400 rounded-2xl hover:bg-white hover:text-black transition"
-              >
-                View Packages
-              </a>
+          
+       
             </div>
           </motion.div>
 

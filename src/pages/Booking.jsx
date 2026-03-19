@@ -25,11 +25,7 @@ import uber from "../assets/uber.webp";
 import uber2 from "../assets/uber2.webp";
 
 const staticCars = [
-  { name: "Family Car SUV", reg: "ABC123", seats: 4, pricePerDay: 2500, image: picture1 },
-  { name: "Mercedes S-Class Family Car", reg: "XYZ789", seats: 4, pricePerDay: 2300, image: pic },
-  { name: "Avanza", reg: "DEF456", seats: 4, pricePerDay: 2200, image: pic3 },
-  { name: "Polo", reg: "UBR001", seats: 4, pricePerDay: 1800, image: uber },
-  { name: "Luxury Uber Black", reg: "UBR002", seats: 6, pricePerDay: 2000, image: uber2 },
+ 
 ];
 
 // Convert imported images to Base64
