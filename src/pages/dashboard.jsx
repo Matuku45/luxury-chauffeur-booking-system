@@ -73,14 +73,14 @@ const Dashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [newCar, setNewCar] = useState({
-    id: null,
-    name: "",
-    reg: "",
-    seats: 4,
-    price: "",
-    image: "",
-  });
+const [newCar, setNewCar] = useState({
+  id: null,
+  name: "",
+  reg: "",
+  seats: 4,
+  price: "",
+  images: [], // changed to an array
+});
 
   /* ================= FETCH CARS & BOOKINGS ================= */
   useEffect(() => {
