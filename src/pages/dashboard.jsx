@@ -90,12 +90,14 @@ const Dashboard = () => {
     };
   }, [bookings, searchQuery]);
 
-  const groupedPending = filteredBookings.pending.reduce((acc, curr) => {
-    const key = `${curr.carName || "Unknown Car"} — ${curr.carRegNumber || "No Reg"}`;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(curr);
-    return acc;
-  }, {});
+  const groupedPending = useMemo(() => {
+    return filteredBookings.pending.reduce((acc, curr) => {
+      const key = `${curr.carName || "Unknown Car"} — ${curr.carRegNumber || "No Reg"}`;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(curr);
+      return acc;
+    }, {});
+  }, [filteredBookings.pending]);
 
   const attendBooking = async (id) => {
     setAttendingId(id);
@@ -122,7 +124,6 @@ const Dashboard = () => {
       const response = await fetch(url, { method, body: JSON.stringify(newCar) });
       const data = await response.json();
       
-      // Update local state instead of re-fetching everything to avoid "removing content"
       if (isEditing) {
         setCars(prev => prev.map(c => c.id === newCar.id ? newCar : c));
       } else {
@@ -222,7 +223,54 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Other Tabs... */}
+        {/* LIVE BOOKINGS SECTION */}
+        {(activeTab === 'overview' || activeTab === 'bookings') && (
+          <div className="mb-16">
+            <SectionHeader title="Live Operations" />
+            <div className="grid grid-cols-1 gap-8">
+              {Object.keys(groupedPending).length > 0 ? (
+                Object.entries(groupedPending).map(([carKey, items]) => (
+                  <BookingGroupCard 
+                    key={carKey} 
+                    title={carKey} 
+                    bookings={items} 
+                    onAttend={attendBooking} 
+                    attendingId={attendingId}
+                    onDelete={(id) => deleteItem('booking', id)}
+                  />
+                ))
+              ) : (
+                <div className="bg-white p-20 rounded-[2.5rem] text-center border-2 border-dashed border-slate-200">
+                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No active bookings found</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* HISTORY SECTION */}
+        {(activeTab === 'history') && (
+          <div className="mb-16">
+            <SectionHeader title="Booking History" />
+            <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+               <div className="divide-y divide-slate-100">
+                 {filteredBookings.attended.length > 0 ? filteredBookings.attended.map(b => (
+                   <div key={b.id} className="p-8 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                      <div>
+                        <p className="font-black text-slate-800 uppercase text-lg">{b.firstName} {b.lastName}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{b.carName} — {b.carRegNumber}</p>
+                      </div>
+                      <div className="flex items-center gap-2 text-emerald-600 font-black text-[10px] uppercase bg-emerald-50 px-4 py-2 rounded-full">
+                        <FaCheckCircle /> Completed
+                      </div>
+                   </div>
+                 )) : (
+                  <div className="p-20 text-center text-slate-400 font-bold uppercase text-xs tracking-widest">No history records</div>
+                 )}
+               </div>
+            </div>
+          </div>
+        )}
       </main>
 
       <AnimatePresence>
@@ -233,7 +281,7 @@ const Dashboard = () => {
   );
 };
 
-/* ================= REFINED SUB-COMPONENTS ================= */
+/* ================= SUB-COMPONENTS ================= */
 
 const SidebarLink = ({ icon, label, active, onClick }) => (
     <button onClick={onClick} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-sm transition-all ${active ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
@@ -248,6 +296,39 @@ const StatCard = ({ label, value, icon, color, bg }) => (
       <p className="text-2xl font-black text-slate-800 tracking-tighter">{value}</p>
     </div>
     <div className={`${bg} ${color} p-4 rounded-2xl text-xl transition-transform group-hover:scale-110`}>{icon}</div>
+  </div>
+);
+
+const BookingGroupCard = ({ title, bookings, onAttend, attendingId, onDelete }) => (
+  <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-slate-900 px-8 py-5 flex justify-between items-center">
+      <h4 className="text-white font-black text-xs tracking-widest uppercase">{title}</h4>
+      <span className="bg-indigo-500 text-white px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">{bookings.length} Pending</span>
+    </div>
+    <div className="divide-y divide-slate-100">
+      {bookings.map((b) => (
+        <div key={b.id} className="p-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 hover:bg-slate-50 transition-all">
+          <div className="space-y-3 flex-1">
+            <p className="text-xl font-black text-slate-800 tracking-tight uppercase">{b.firstName} {b.lastName}</p>
+            <div className="flex flex-wrap gap-x-8 gap-y-2 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+              <span className="flex items-center gap-2"><FaMapMarkerAlt className="text-indigo-500"/> {b.pickUpLocation}</span>
+              <span className="flex items-center gap-2"><FaCalendarAlt className="text-indigo-500"/> {b.pickUpDate}</span>
+              <span className="flex items-center gap-2"><FaPhone className="text-indigo-500"/> {b.clientPhone}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 w-full xl:w-auto">
+            <button 
+              disabled={attendingId === b.id}
+              onClick={() => onAttend(b.id)}
+              className="flex-1 xl:flex-none bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 min-w-[180px]"
+            >
+              {attendingId === b.id ? <FaSpinner className="animate-spin" /> : <>Confirm Payment</>}
+            </button>
+            <button onClick={() => onDelete(b.id)} className="p-3 text-slate-300 hover:text-red-500 transition-all"><FaTrash size={16}/></button>
+          </div>
+        </div>
+      ))}
+    </div>
   </div>
 );
 
@@ -295,7 +376,6 @@ const SectionHeader = ({ title }) => (
   </div>
 );
 
-// PROFESSIONAL MULTI-IMAGE OVERLAY
 const ImageGalleryOverlay = ({ data, onClose }) => {
   const [idx, setIdx] = useState(data.index);
   const next = (e) => { e.stopPropagation(); setIdx((idx + 1) % data.images.length); };
