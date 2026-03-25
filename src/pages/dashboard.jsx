@@ -4,7 +4,7 @@ import {
   FaCar, FaLayerGroup, FaPlus, FaTimes, FaTrash,
   FaEdit, FaCalendarAlt, FaMapMarkerAlt, FaPhone, FaSearch, 
   FaExpand, FaCheckCircle, FaChevronLeft, FaChevronRight, FaChartLine, 
-  FaClipboardCheck, FaSpinner, FaThLarge, FaHistory
+  FaClipboardCheck, FaSpinner, FaThLarge, FaHistory, FaBars
 } from "react-icons/fa";
 
 const FIREBASE_URL = "https://roomap-aa517-default-rtdb.firebaseio.com/";
@@ -19,10 +19,23 @@ const Dashboard = () => {
   const [zoomData, setZoomData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview"); 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newCar, setNewCar] = useState({ id: null, name: "", reg: "", seats: 4, price: "", images: [] });
 
+  // EFFECT: Hide external App Header/Footer and fetch data
   useEffect(() => {
+    // Inject style to hide external layout elements while on Dashboard
+    const style = document.createElement('style');
+    style.innerHTML = `
+      header, footer, .app-header, .app-footer, .nav-main { display: none !important; }
+    `;
+    document.head.appendChild(style);
+    
     fetchData();
+
+    return () => {
+      document.head.removeChild(style); // Clean up when leaving dashboard
+    };
   }, []);
 
   const fetchData = async (retries = 3) => {
@@ -32,9 +45,7 @@ const Dashboard = () => {
         fetch(`${FIREBASE_URL}cars.json`),
         fetch(`${FIREBASE_URL}bookings.json`)
       ]);
-
       if (!cRes.ok || !bRes.ok) throw new Error("Network response was not ok");
-
       const cData = await cRes.json() || {};
       const bData = await bRes.json() || {};
 
@@ -54,11 +65,8 @@ const Dashboard = () => {
       setBookings(Object.entries(bData).map(([id, b]) => ({ id, ...b })));
       setLoading(false);
     } catch (err) { 
-      if (retries > 0) {
-        setTimeout(() => fetchData(retries - 1), 1500);
-      } else {
-        setLoading(false);
-      }
+      if (retries > 0) setTimeout(() => fetchData(retries - 1), 1500);
+      else setLoading(false);
     }
   };
 
@@ -69,13 +77,7 @@ const Dashboard = () => {
         const carPrice = b.price || cars.find(c => c.reg === b.carRegNumber)?.price || 0;
         return sum + Number(carPrice);
     }, 0); 
-
-    return { 
-      fleet: cars.length, 
-      activeBookings: pending.length, 
-      attendedBookings: attended.length, 
-      revenue: totalRevenue 
-    };
+    return { fleet: cars.length, activeBookings: pending.length, attendedBookings: attended.length, revenue: totalRevenue };
   }, [cars, bookings]);
 
   const filteredBookings = useMemo(() => {
@@ -102,18 +104,14 @@ const Dashboard = () => {
   const attendBooking = async (id) => {
     setAttendingId(id);
     try {
-      const response = await fetch(`${FIREBASE_URL}bookings/${id}.json`, {
+      await fetch(`${FIREBASE_URL}bookings/${id}.json`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ attended: true })
       });
-      if (!response.ok) throw new Error("Failed update");
       setBookings(prev => prev.map(b => b.id === id ? { ...b, attended: true } : b));
-    } catch (err) { 
-      alert("Could not update booking."); 
-    } finally {
-      setAttendingId(null);
-    }
+    } catch (err) { alert("Update failed."); }
+    finally { setAttendingId(null); }
   };
 
   const saveCar = async (e) => {
@@ -123,29 +121,20 @@ const Dashboard = () => {
     try {
       const response = await fetch(url, { method, body: JSON.stringify(newCar) });
       const data = await response.json();
-      
-      if (isEditing) {
-        setCars(prev => prev.map(c => c.id === newCar.id ? newCar : c));
-      } else {
-        setCars(prev => [...prev, { ...newCar, id: data.name }]);
-      }
-
+      if (isEditing) setCars(prev => prev.map(c => c.id === newCar.id ? newCar : c));
+      else setCars(prev => [...prev, { ...newCar, id: data.name }]);
       setShowModal(false);
       setNewCar({ id: null, name: "", reg: "", seats: 4, price: "", images: [] });
-    } catch (err) {
-      alert("Error saving vehicle data.");
-    }
+    } catch (err) { alert("Error saving vehicle."); }
   };
 
   const deleteItem = async (type, id) => {
-    if (!window.confirm(`Permanently delete this ${type}?`)) return;
+    if (!window.confirm(`Delete this ${type}?`)) return;
     try {
       await fetch(`${FIREBASE_URL}${type}s/${id}.json`, { method: "DELETE" });
       if (type === 'car') setCars(prev => prev.filter(c => c.id !== id));
       if (type === 'booking') setBookings(prev => prev.filter(b => b.id !== id));
-    } catch (err) {
-      alert("Deletion failed.");
-    }
+    } catch (err) { alert("Deletion failed."); }
   };
 
   if (loading) {
@@ -160,29 +149,52 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[#F1F5F9] flex text-slate-900 font-sans">
       
-      {/* SIDEBAR */}
-      <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-slate-200 sticky top-0 h-screen p-8">
-        <div className="flex items-center gap-3 mb-12">
-          <div className="bg-indigo-600 p-2 rounded-xl text-white"><FaCar size={20}/></div>
-          <h1 className="text-xl font-black tracking-tighter uppercase italic">Fleet<span className="text-indigo-600">Core</span></h1>
-        </div>
+      {/* MOBILE HEADER */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-slate-200 z-[40] px-6 py-4 flex justify-between items-center">
+        <h1 className="text-lg font-black tracking-tighter uppercase italic">Fleet<span className="text-indigo-600">Core</span></h1>
+        <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-slate-600"><FaBars size={20}/></button>
+      </div>
 
-        <nav className="space-y-2 flex-1">
-          <SidebarLink active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<FaThLarge />} label="Overview" />
-          <SidebarLink active={activeTab === 'inventory'} onClick={() => setActiveTab('inventory')} icon={<FaCar />} label="Inventory" />
-          <SidebarLink active={activeTab === 'bookings'} onClick={() => setActiveTab('bookings')} icon={<FaLayerGroup />} label="Live Bookings" />
-          <SidebarLink active={activeTab === 'history'} onClick={() => setActiveTab('history')} icon={<FaHistory />} label="History" />
-        </nav>
+      {/* SIDEBAR (DESKTOP & MOBILE) */}
+      <AnimatePresence>
+        {(isMobileMenuOpen || window.innerWidth >= 1024) && (
+          <motion.aside 
+            initial={window.innerWidth < 1024 ? { x: -300 } : {}}
+            animate={{ x: 0 }}
+            exit={{ x: -300 }}
+            className={`fixed lg:sticky top-0 left-0 h-screen w-72 bg-white border-r border-slate-200 z-[50] p-8 flex flex-col transition-all`}
+          >
+            <div className="flex items-center justify-between mb-12">
+              <div className="flex items-center gap-3">
+                <div className="bg-indigo-600 p-2 rounded-xl text-white"><FaCar size={20}/></div>
+                <h1 className="text-xl font-black tracking-tighter uppercase italic">Fleet<span className="text-indigo-600">Core</span></h1>
+              </div>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden text-slate-400"><FaTimes size={20}/></button>
+            </div>
 
-        <button 
-          onClick={() => { setIsEditing(false); setShowModal(true); }}
-          className="mt-auto w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 hover:bg-indigo-600 transition-all shadow-lg"
-        >
-          <FaPlus /> New Vehicle
-        </button>
-      </aside>
+            <nav className="space-y-2 flex-1">
+              <SidebarLink active={activeTab === 'overview'} onClick={() => { setActiveTab('overview'); setIsMobileMenuOpen(false); }} icon={<FaThLarge />} label="Overview" />
+              <SidebarLink active={activeTab === 'inventory'} onClick={() => { setActiveTab('inventory'); setIsMobileMenuOpen(false); }} icon={<FaCar />} label="Inventory" />
+              <SidebarLink active={activeTab === 'bookings'} onClick={() => { setActiveTab('bookings'); setIsMobileMenuOpen(false); }} icon={<FaLayerGroup />} label="Live Bookings" />
+              <SidebarLink active={activeTab === 'history'} onClick={() => { setActiveTab('history'); setIsMobileMenuOpen(false); }} icon={<FaHistory />} label="History" />
+            </nav>
 
-      <main className="flex-1 p-6 lg:p-12 pb-32 lg:pb-12 max-w-[1600px]">
+            <button 
+              onClick={() => { setIsEditing(false); setShowModal(true); setIsMobileMenuOpen(false); }}
+              className="mt-auto w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 hover:bg-indigo-600 transition-all shadow-lg"
+            >
+              <FaPlus /> New Vehicle
+            </button>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* MOBILE OVERLAY */}
+      {isMobileMenuOpen && (
+        <div onClick={() => setIsMobileMenuOpen(false)} className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[45] lg:hidden" />
+      )}
+
+      <main className="flex-1 p-6 lg:p-12 mt-16 lg:mt-0 max-w-[1600px]">
         {/* HEADER AREA */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
@@ -194,11 +206,9 @@ const Dashboard = () => {
             <div className="relative w-full md:w-96">
                 <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
-                    type="text" 
-                    placeholder="Search..." 
+                    type="text" placeholder="Search..." 
                     className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
         </div>
@@ -223,21 +233,13 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* LIVE BOOKINGS SECTION */}
         {(activeTab === 'overview' || activeTab === 'bookings') && (
           <div className="mb-16">
             <SectionHeader title="Live Operations" />
             <div className="grid grid-cols-1 gap-8">
               {Object.keys(groupedPending).length > 0 ? (
                 Object.entries(groupedPending).map(([carKey, items]) => (
-                  <BookingGroupCard 
-                    key={carKey} 
-                    title={carKey} 
-                    bookings={items} 
-                    onAttend={attendBooking} 
-                    attendingId={attendingId}
-                    onDelete={(id) => deleteItem('booking', id)}
-                  />
+                  <BookingGroupCard key={carKey} title={carKey} bookings={items} onAttend={attendBooking} attendingId={attendingId} onDelete={(id) => deleteItem('booking', id)} />
                 ))
               ) : (
                 <div className="bg-white p-20 rounded-[2.5rem] text-center border-2 border-dashed border-slate-200">
@@ -248,7 +250,6 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* HISTORY SECTION */}
         {(activeTab === 'history') && (
           <div className="mb-16">
             <SectionHeader title="Booking History" />
@@ -318,8 +319,7 @@ const BookingGroupCard = ({ title, bookings, onAttend, attendingId, onDelete }) 
           </div>
           <div className="flex items-center gap-4 w-full xl:w-auto">
             <button 
-              disabled={attendingId === b.id}
-              onClick={() => onAttend(b.id)}
+              disabled={attendingId === b.id} onClick={() => onAttend(b.id)}
               className="flex-1 xl:flex-none bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 min-w-[180px]"
             >
               {attendingId === b.id ? <FaSpinner className="animate-spin" /> : <>Confirm Payment</>}
@@ -332,8 +332,7 @@ const BookingGroupCard = ({ title, bookings, onAttend, attendingId, onDelete }) 
   </div>
 );
 
-const VehicleCard = ({ car, onEdit, onDelete, onZoom }) => {
-  return (
+const VehicleCard = ({ car, onEdit, onDelete, onZoom }) => (
     <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden hover:shadow-xl transition-all group flex flex-col">
       <div className="relative h-56 overflow-hidden bg-slate-100">
         {car.images?.length > 0 ? (
@@ -344,13 +343,11 @@ const VehicleCard = ({ car, onEdit, onDelete, onZoom }) => {
             </div>
             {car.images.length > 1 && (
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-black text-white uppercase tracking-widest">
-                +{car.images.length - 1} More Photos
+                +{car.images.length - 1} Photos
               </div>
             )}
           </>
-        ) : (
-          <div className="flex items-center justify-center h-full text-slate-200"><FaCar size={40} /></div>
-        )}
+        ) : <div className="flex items-center justify-center h-full text-slate-200"><FaCar size={40} /></div>}
       </div>
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
@@ -366,8 +363,7 @@ const VehicleCard = ({ car, onEdit, onDelete, onZoom }) => {
         </div>
       </div>
     </div>
-  );
-};
+);
 
 const SectionHeader = ({ title }) => (
   <div className="mb-6">
@@ -378,36 +374,17 @@ const SectionHeader = ({ title }) => (
 
 const ImageGalleryOverlay = ({ data, onClose }) => {
   const [idx, setIdx] = useState(data.index);
-  const next = (e) => { e.stopPropagation(); setIdx((idx + 1) % data.images.length); };
-  const prev = (e) => { e.stopPropagation(); setIdx((idx - 1 + data.images.length) % data.images.length); };
-
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-slate-950/95 z-[100] flex items-center justify-center p-4 lg:p-12 backdrop-blur-2xl">
       <button onClick={onClose} className="absolute top-8 right-8 text-white/40 hover:text-white transition-all z-[110]"><FaTimes size={32}/></button>
-      
       <div className="relative w-full max-w-6xl h-full flex items-center justify-center">
         {data.images.length > 1 && (
-          <button onClick={prev} className="absolute left-0 lg:-left-20 p-5 bg-white/5 hover:bg-white/10 text-white rounded-full transition-all border border-white/10"><FaChevronLeft size={24}/></button>
+          <button onClick={(e) => { e.stopPropagation(); setIdx((idx - 1 + data.images.length) % data.images.length); }} className="absolute left-0 lg:-left-20 p-5 bg-white/5 text-white rounded-full border border-white/10"><FaChevronLeft size={24}/></button>
         )}
-        
-        <motion.img 
-          key={idx}
-          initial={{ opacity: 0, scale: 0.9 }} 
-          animate={{ opacity: 1, scale: 1 }}
-          src={data.images[idx]} 
-          className="max-w-full max-h-[80vh] rounded-[2.5rem] shadow-2xl object-contain" 
-          alt="Full size vehicle" 
-        />
-
+        <motion.img key={idx} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} src={data.images[idx]} className="max-w-full max-h-[80vh] rounded-[2.5rem] shadow-2xl object-contain" />
         {data.images.length > 1 && (
-          <button onClick={next} className="absolute right-0 lg:-right-20 p-5 bg-white/5 hover:bg-white/10 text-white rounded-full transition-all border border-white/10"><FaChevronRight size={24}/></button>
+          <button onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % data.images.length); }} className="absolute right-0 lg:-right-20 p-5 bg-white/5 text-white rounded-full border border-white/10"><FaChevronRight size={24}/></button>
         )}
-      </div>
-
-      <div className="absolute bottom-10 flex gap-3">
-        {data.images.map((_, i) => (
-          <div key={i} className={`h-1.5 transition-all rounded-full ${i === idx ? 'w-8 bg-indigo-500' : 'w-2 bg-white/20'}`} />
-        ))}
       </div>
     </motion.div>
   );
@@ -421,12 +398,12 @@ const CarModal = ({ onClose, onSubmit, car, setCar, isEditing }) => (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <InputGroup label="Model Name" value={car.name} onChange={(v) => setCar({...car, name: v})} placeholder="e.g. BMW M4" />
           <InputGroup label="Plate Number" value={car.reg} onChange={(v) => setCar({...car, reg: v})} placeholder="ND 1234" />
-          <InputGroup label="Passenger Capacity" type="number" value={car.seats} onChange={(v) => setCar({...car, seats: v})} />
-          <InputGroup label="Price Per Day (R)" type="number" value={car.price} onChange={(v) => setCar({...car, price: v})} />
+          <InputGroup label="Capacity" type="number" value={car.seats} onChange={(v) => setCar({...car, seats: v})} />
+          <InputGroup label="Price (R)" type="number" value={car.price} onChange={(v) => setCar({...car, price: v})} />
         </div>
         <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Vehicle Media</label>
-            <input type="file" multiple className="w-full text-xs font-bold text-slate-400 file:mr-4 file:py-3 file:px-8 file:rounded-2xl file:border-0 file:bg-slate-100 file:text-indigo-600 hover:file:bg-indigo-50 cursor-pointer" 
+            <label className="text-[10px] font-black text-slate-400 uppercase">Media</label>
+            <input type="file" multiple className="w-full text-xs text-slate-400 file:mr-4 file:py-3 file:px-8 file:rounded-2xl file:border-0 file:bg-slate-100 file:text-indigo-600" 
               onChange={(e) => {
                 const files = Array.from(e.target.files);
                 Promise.all(files.map(f => new Promise(res => {
@@ -438,7 +415,7 @@ const CarModal = ({ onClose, onSubmit, car, setCar, isEditing }) => (
       </div>
       <div className="bg-slate-50 px-10 py-8 flex gap-4">
         <button type="button" onClick={onClose} className="flex-1 font-black text-slate-400 uppercase text-[10px]">Cancel</button>
-        <button className="flex-[2] bg-indigo-600 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-200">Save Vehicle</button>
+        <button className="flex-[2] bg-indigo-600 text-white py-5 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-indigo-200">Save Vehicle</button>
       </div>
     </motion.form>
   </motion.div>
@@ -446,7 +423,7 @@ const CarModal = ({ onClose, onSubmit, car, setCar, isEditing }) => (
 
 const InputGroup = ({ label, type="text", value, onChange, placeholder }) => (
   <div className="flex flex-col gap-2">
-    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{label}</label>
+    <label className="text-[10px] font-black text-slate-400 uppercase">{label}</label>
     <input required type={type} className="bg-slate-100 border-none rounded-2xl px-5 py-4 font-bold text-sm focus:ring-2 focus:ring-indigo-500 transition-all" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
   </div>
 );
